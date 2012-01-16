@@ -1,0 +1,191 @@
+%%
+%% This is file `algo.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% algo.dtx  (with options: `package')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from algo.sty.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file algo.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+%%
+%% File: algo.dtx Copyright (C) 2002 Jaco Geldenhuys
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{algo}
+         [2002/06/21 v1.0 Algorithm typesetting package (JG)]
+%% \CheckSum{517}
+%%
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+\newbox\algo@box
+\newif\if@algofirst
+\newif\if@algonr
+\newcounter{algo@nr} \setcounter{algo@nr}{0} \refstepcounter{algo@nr}
+\newif\if@algoreset \@algoresettrue
+\newif\if@algokeep \@algokeepfalse
+\newlength{\algo@left}   \setlength{\algo@left}{0pt}
+\newlength{\algo@margin} \setlength{\algo@margin}{1.7em}
+\newlength{\algo@indent} \setlength{\algo@indent}{1em}
+\newlength{\algo@cur}      \setlength{\algo@cur}{\algo@margin}
+\newlength{\algo@next}     \setlength{\algo@next}{\algo@margin}
+\newcommand{\algo@in}{\global\addtolength{\algo@next}{\algo@indent}}
+\newcommand{\algo@curout}{\global\addtolength{\algo@cur}{-\algo@indent}}
+\newcommand{\algo@out}{\algo@curout%
+                       \global\addtolength{\algo@next}{-\algo@indent}}
+\newcommand{\AlgoName}[1]{\textsc{#1}}
+\newcommand{\AlgoKey}[1]{\textbf{#1}}
+\newcommand{\AlgoVar}[1]{\textit{#1}}
+\newcommand{\AlgoConst}[1]{\textbf{#1}}
+\newcommand{\AlgoText}[1]{#1}
+\newcommand{\algo@name}[1]{\mbox{\AlgoName{#1}}}
+\newcommand{\algo@key}[1]{\mbox{\AlgoKey{#1}}}
+\newcommand{\algo@var}[1]{\mbox{\AlgoVar{#1}}}
+\newcommand{\algo@const}[1]{\mbox{\AlgoConst{#1}}}
+\newcommand{\algo@text}[1]{\mbox{\AlgoText{#1}}}
+\newcommand{\AlgoAssign}{\ensuremath{\leftarrow}}
+\newcommand{\AlgoUS}{\textunderscore}
+\newcommand{\AlgoSub}[1]{\ensuremath{_{\mbox{\scriptsize#1}}}}
+\newif\if@algostr \@algostrfalse
+\def\algo@str{\if@algostr\def\@str{\@algostrfalse\AlgoStrEnd}%
+\else\def\@str{\AlgoStrBeg\@algostrtrue}\fi\@str}
+\begingroup
+\catcode`\ =\active%
+\gdef\AlgoStrBeg{\mbox\bgroup%
+``\begingroup\ttfamily\obeyspaces\let =\AlgoSpace}%
+\endgroup
+\def\AlgoStrEnd{\endgroup''\egroup}
+\def\AlgoSpace{\mbox{\texttt{\char'040}}}
+\def\AlgoReset{\AlgoStartFrom{1}}
+\def\AlgoContinue{\@ifnextchar*\algo@conts\algo@cont}
+\def\algo@cont{\@algoresettrue\@algokeeptrue
+  \addtocounter{algo@nr}{-1}\refstepcounter{algo@nr}}
+\def\algo@conts*{\@algoresetfalse\@algokeeptrue
+  \addtocounter{algo@nr}{-1}\refstepcounter{algo@nr}}
+\def\AlgoStartFrom{\@ifnextchar*\algo@sfs\algo@sf}
+\def\algo@sf#1{\@algoresettrue\@algokeeptrue
+  \setcounter{algo@nr}{#1}\addtocounter{algo@nr}{-1}
+  \refstepcounter{algo@nr}}
+\def\algo@sfs*#1{\@algoresetfalse\@algokeeptrue
+  \setcounter{algo@nr}{#1}\addtocounter{algo@nr}{-1}
+  \refstepcounter{algo@nr}}
+\newcommand{\algo@semicolon}{\unskip\hskip.25em%
+   \hbox to\z@{;\hss}\kern.03em;\hskip.35em\ignorespaces}
+\newcommand{\algo@if}{\@ifnextchar*\algo@ifshort\algo@iflong}
+\def\algo@ifshort*#1#2{\algo@key{if}~#1~%
+                       \algo@key{then}~#2~\algo@key{endif}}
+\newcommand{\algo@iflong}[1]{\algo@key{if}~#1~\algo@key{then}\algo@in}
+\newcommand{\algo@elseif}[1]{\algo@key{else if}~#1~%
+                             \algo@key{then}\algo@curout}
+\newcommand{\algo@else}{\algo@key{else}\algo@curout}
+\newcommand{\algo@endif}{\algo@key{endif}\algo@out}
+\newcommand{\algo@while}{\@ifnextchar*\algo@whileshort\algo@whilelong}
+\def\algo@whileshort*#1#2{\algo@key{while}~#1~%
+                          \algo@key{do}~#2~\algo@key{endwhile}}
+\newcommand{\algo@whilelong}[1]{\algo@key{while}~#1~%
+                                \algo@key{do}\algo@in}
+\newcommand{\algo@endwhile}{\algo@key{endwhile}\algo@out}
+\newcommand{\algo@loop}{\@ifnextchar*\algo@loopshort\algo@looplong}
+\def\algo@loopshort*#1{\algo@key{loop}~#1~\algo@key{endloop}}
+\newcommand{\algo@looplong}{\algo@key{loop}\algo@in}
+\newcommand{\algo@endloop}{\algo@key{endloop}\algo@out}
+\newcommand{\algo@repeat}{\@ifnextchar*\algo@repeatshort%
+                                       \algo@repeatlong}
+\def\algo@repeatshort*#1#2{\algo@key{repeat}~#1~\algo@key{until}~#2}
+\newcommand{\algo@repeatlong}{\algo@key{repeat}\algo@in}
+\newcommand{\algo@until}[1]{\algo@key{until}~#1\algo@out}
+\newcommand{\algo@for}{\@ifnextchar*\algo@forshort\algo@forlong}
+\def\algo@forshort*#1#2{\algo@key{for}~#1~\algo@key{do}%
+                          ~#2~\algo@key{endfor}}
+\newcommand{\algo@forlong}[1]{\algo@key{for}~#1~\algo@key{do}\algo@in}
+\newcommand{\algo@endfor}{\algo@key{endfor}\algo@out}
+\newcommand{\algo@break}{\algo@key{break}}
+\newcommand{\algo@return}{\algo@key{return}}
+\newcommand{\algo@call}[1]{\algo@name{#1}}
+\newcommand{\algo@true}{\algo@const{true}}
+\newcommand{\algo@false}{\algo@const{false}}
+\newcommand{\algo@nil}{\algo@const{nil}}
+\gdef\algo@mathsub#1{_#1}
+\begingroup
+\catcode`\|=\active \catcode`\"=\active
+\catcode`\_=\active
+\gdef\algo{\@algonrtrue\@algo}
+\gdef\endalgo{\@endalgo}
+\expandafter\gdef\csname algo*\endcsname{\@algonrfalse\@algo}
+\expandafter\gdef\csname endalgo*\endcsname{\@endalgo}
+\gdef\@algo#1#2{%
+   \begingroup
+   \setlength{\algo@cur}{\algo@margin}
+   \setlength{\algo@next}{\algo@margin}
+   \if@algonr\if@algokeep\else
+             \setcounter{algo@nr}{0}\refstepcounter{algo@nr} \fi
+             \if@algoreset \global\@algokeepfalse \fi\fi
+   \small
+   \parskip\z@
+   \parindent\z@
+   \def\par{$\egroup%
+      \if@algofirst
+        \@algofirstfalse
+      \else
+        \@@par\makebox[\algo@left]{}%
+        \makebox[\algo@cur][l]{\if@algonr\footnotesize\thealgo@nr%
+                       \else\hss\fi}%
+        \box\algo@box%
+        \if@algonr\refstepcounter{algo@nr}\fi%
+        \setlength{\algo@cur}{\algo@next}%
+      \fi%
+      \setbox\algo@box\hbox\bgroup$}
+   \let\:=\AlgoAssign \let\;=\algo@semicolon
+   \let\IF=\algo@if \let\ELSEIF=\algo@elseif
+   \let\ELSE=\algo@else \let\ENDIF=\algo@endif
+   \let\WHILE=\algo@while \let\ENDWHILE=\algo@endwhile
+   \let\FOR=\algo@for \let\ENDFOR=\algo@endfor
+   \let\REPEAT=\algo@repeat \let\UNTIL=\algo@until
+   \let\LOOP=\algo@loop \let\ENDLOOP=\algo@endloop
+   \let\TRUE=\algo@true \let\FALSE=\algo@false \let\NIL=\algo@nil
+   \let\CALL=\algo@call \let\RETURN=\algo@return \let\BREAK=\algo@break
+   \let\sub=\AlgoSub
+   \obeylines%
+   \catcode`\|=\active \def|##1|{\algo@var{##1}}%
+   \catcode`\"=\active \def"{\algo@str}%
+   \catcode`\_=\active \def_{\ifmmode\algo@mathsub\else\AlgoUS\fi}%
+   \def\@##1{\algo@text{##1}}
+   \ifx#1\@empty\else
+      \makebox[\algo@left]{}\algo@name{#1}$\,(#2)$%
+   \fi
+   \@algofirsttrue
+   \setbox\algo@box\hbox\bgroup$}
+\gdef\@endalgo{$\egroup \@@par \endgroup}
+\endgroup
+\def\algofragment{\@algonrtrue\@algo{}{}}
+\def\endalgofragment{\@endalgo}
+\expandafter\def\csname algofragment*\endcsname{\@algonrfalse\@algo{}{}}
+\expandafter\def\csname endalgofragment*\endcsname{\@endalgo}
+\endinput
+%%
+%% End of file `algo.sty'.
