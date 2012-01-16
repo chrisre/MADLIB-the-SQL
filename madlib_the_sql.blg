@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99c (Web2C 7.5.4)
+The top-level auxiliary file: madlib_the_sql.aux
+The style file: abbrv.bst
+Database file #1: chris.local.wopages.bib
+Warning--I didn't find a database entry for "crftutorial"
+Warning--I didn't find a database entry for "viterbi"
+You've used 5 entries,
+            2118 wiz_defined-function locations,
+            530 strings with 4307 characters,
+and the built_in function-call counts, 1278 in all, are:
+= -- 117
+> -- 63
+< -- 0
++ -- 26
+- -- 20
+* -- 68
+:= -- 237
+add.period$ -- 15
+call.type$ -- 5
+change.case$ -- 25
+chr.to.int$ -- 0
+cite$ -- 5
+duplicate$ -- 56
+empty$ -- 105
+format.name$ -- 20
+if$ -- 261
+int.to.chr$ -- 0
+int.to.str$ -- 5
+missing$ -- 6
+newline$ -- 28
+num.names$ -- 10
+pop$ -- 31
+preamble$ -- 1
+purify$ -- 20
+quote$ -- 0
+skip$ -- 34
+stack$ -- 0
+substring$ -- 26
+swap$ -- 5
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 16
+warning$ -- 0
+while$ -- 10
+width$ -- 6
+write$ -- 57
+(There were 2 warnings)

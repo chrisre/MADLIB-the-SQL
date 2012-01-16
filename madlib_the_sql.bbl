@@ -1,0 +1,28 @@
+\begin{thebibliography}{1}
+
+\bibitem{BertsekasNLP}
+D.~P. Bertsekas.
+\newblock {\em Nonlinear Programming}.
+\newblock Athena Scientific, Belmont, MA, 2nd edition, 1999.
+
+\bibitem{boyd:cvx}
+S.~Boyd and L.~Vandenberghe.
+\newblock {\em Convex Optimization}.
+\newblock Cambridge University Press, New York, NY, USA, 2004.
+
+\bibitem{RobbinsMonro51}
+H.~Robbins and S.~Monro.
+\newblock A stochastic approximation method.
+\newblock {\em Ann. Math. Statistics}, 22, 1951.
+
+\bibitem{wallach:crf}
+H.~M. Wallach.
+\newblock Conditional random fields: An introduction.
+\newblock Technical report, Dept. of CIS, Univ. of Pennsylvania, 2004.
+
+\bibitem{Zinkevich10}
+M.~Zinkevich, M.~Weimer, A.~Smola, and L.~Li.
+\newblock Parallelized stochastic gradient descent.
+\newblock In {\em NIPS}, 2010.
+
+\end{thebibliography}
