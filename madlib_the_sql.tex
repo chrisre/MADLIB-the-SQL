@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{balance}  % for  \balance command ON LASMAD PAGE  (only there!)
 \usepackage{alltt,algorithm}
+\usepackage{url}
 
 \begin{document}
 
@@ -17,106 +18,102 @@
 \subtitle{MAD Skills, the SQL}
 
 
-\numberofauthors{8} %  in this sample file, there are a *total*
+\numberofauthors{11} %  in this sample file, there are a *total*
 % of EIGHT authors. SIX appear on the 'first-page' (for formatting
 % reasons) and the remaining two appear in the \additionalauthors section.
 
-\author{}
+\author{Joseph M. Hellerstein\\{\small U.C. Berkeley} \and
+ Christoper Re\\{\small U. Wisconsin} \and
+ Daisy Zhe Wang\\{\small U. Florida} \and
+ Eugene Fratkin\\{\small Greenplum} \and
+ Aleks Gorajek\\{\small Greenplum} \and
+ Steven Hillion\\{\small Alpine Data Labs} \and
+ Luke Lonergan\\{\small Greenplum} \and
+ Kee Siong Ng\\{\small Greenplum} \and
+ Florian Schoppmann\\{\small Greenplum} \and
+ Gavin Sherry\\{\small Greenplum} \and
+ Caleb Welton\\{\small Greenplum}}
 
 \maketitle
 
 \begin{abstract}
+  MADlib is a free, open-source library of in-database analytic methods.
+  It provides an evolving suite of SQL-based algorithms for machine
+  learning, data mining and statistics that run at scale within a
+  database engine, with no need for data import/export to other tools.
+  The goal is for MADlib to eventually serve a role for scalable
+  database systems that is similar to the CRAN library for R: a
+  community repository of statistical methods, this time written with
+  scale and parallelism in mind.
+
+  In this paper we introduce the MADlib project, including the
+  background that led to its beginnings, and the motivation for its
+  open-source nature.  We provide an overview of the library's
+  architecture and design patterns, and provide a detailed description
+  of one example method in that context.  Finally, we report on early
+  performance results in the open-source PostgreSQL DBMS, and scaling
+  results in the Greenplum parallel DBMS.  MADlib is now freely
+  available in beta form at http://madlib.net, and the project is open
+  for contributions of both new methods, and ports to additional
+  database platforms.  
 \end{abstract}
 
 
 
 
-\section{Introduction}
-
-
-MADlib is a free, open-source library of in-database analytic methods.
-It provides an evolving suite of SQL-based algorithms for machine
-learning, data mining and statistics that run at scale within a
-database engine, with no need for data import/export to other tools.
-The goal is for MADlib to eventually serve a role for scalable
-database systems that is similar to the CRAN library for R: a
-community repository of statistical methods, this time written with
-scale and parallelism in mind.
-
-In this paper we introduce the MADlib project, including the
-background that led to its beginnings, and the motivation for its
-open-source nature.  We provide an overview of the library’s
-architecture and design patterns, and provide a detailed description
-of one example method in that context.  Finally, we report on early
-performance results in the open-source PostgreSQL DBMS, and scaling
-results in the Greenplum parallel DBMS.  MADlib is now freely
-available in beta form at http://madlib.net, and the project is open
-for contributions of both new methods, and ports to additional
-database platforms.  
-
-\subsection*{Background: From Accountancy to Analytics}
+\section{Introduction:\\From Warehousing to Science}
+\noindent
 Until fairly recently, large databases were used mainly for accounting
 purposes in enterprises, supporting financial record-keeping,
-reporting and analysis at various levels of granularity.  “Data
-Warehousing” was the name given to industry practices for these
+reporting and analysis at various levels of granularity.  {\em Data
+Warehousing} was the name given to industry practices for these
 database workloads.  Accounting, by definition, involves significant
 care and attention to detail. Data Warehousing practices followed suit
-by encouraging careful and comprehensive database design, and exacting
-policies regarding the quality of data loaded into the database.
+by encouraging careful and comprehensive database design, and by following exacting policies regarding the quality of data loaded into the database.
 
 Attitudes toward large databases have been changing quickly in the
 past decade, as the focus of large database usage has shifted from
 accountancy to analytics.  The need for correct accounting and data
 warehousing practice has not gone away, but it is a becoming a
-shrinking fraction of the volume—and the value—of large-scale data
+shrinking fraction of the volume---and the value---of large-scale data
 management.  The emerging trend focuses on the use of a wide range of
 potentially noisy data to support predictive analytics, managed by
-statistical models and algorithms for analysis.  “Data Science” is a
+statistical models and algorithms for analysis.  {\em Data Science} is a
 name that is gaining currency for the industry practices evolving
 around these workloads.
 
-Some five years ago, a number of us observed this behavior recurring
-in the field, as customers began using scalable shared-nothing
-parallel database engines in surprising ways.  Rather than carefully
-designing global schemas and “repelling” data until it was integrated,
-they were encouraging analysts to load data into private schemas in
-whatever form was convenient.  Rather than focusing on canned
-OLAP-style drill-down reports, they were implementing statistical
+Data scientists make use of database engines in a very different way than traditional practice in data warehousing.  Rather than carefully
+designing global schemas and ``repelling'' data until it is integrated,
+they load data into private schemas in whatever form is convenient.  Rather than focusing on simple OLAP-style drill-down reports, they implement rich statistical
 models and algorithms in the database, using extensible SQL as a
-language for orchestrating data parallelism.  Given this kind of
-laissez faire attitude toward design and integration, and given the
-scalability of shared-nothing architectures, analysts were
-increasingly attracted to make use of these database platforms as
-statistical engines for big data sets.  These environments were very
-different from the tradition of being “repelled” by IT managers who
-jealously guarded carefully-architected data warehouses.
+language for orchestrating data movement between disk, memory, and multiple parallel machines.  In short, for data scientists a DBMS is a scalable analytics runtime---one that is conveniently compatible with the database systems widely used for transactions and accounting.
 
 In 2008, a group of us from the database industry, consultancy,
 academia, and end-user analytics got together to describe this usage
-pattern.  We dubbed it MAD, an acronym for the Magnetic (as opposed to
-repellent) aspect of the platform, the Agile design patterns used for
-loading and iterating on data, and the Deep analytic models and
-algorithms being used.  The “MAD Skills” paper that resulted described
+pattern as we observed it in the field.  We dubbed it {\bf MAD}, an acronym for the {\em Magnetic} (as opposed to
+repellent) aspect of the platform, the {\em Agile} design patterns used for
+modeling, loading and iterating on data, and the {\em Deep} statistical models and
+algorithms being used.  The ``MAD Skills'' paper that resulted described
 this pattern, and included a number of non-trivial analytics
-techniques implemented as simple SQL scripts [MADSkills].
+techniques implemented as simple SQL scripts~\cite{madskills}.
 
 After the publication of the paper, it became clear that there was
-significant interest not only in the design aspects of the paper, but
+significant interest not only in its design aspects, but
 also in the actual SQL implementations of statistical methods.  This
 interest came from every constituency involved: customers were
 requesting it of consultants and vendors, and academics were
 increasingly publishing papers on the topic.  What was missing was a
 software framework to focus the energy of the community, and connect
 the various interested constituencies.  This led to the design of
-MADlib, the subject of this paper.  
+{\bf MADlib}, the subject of this paper.  
 
 \subsection*{Introducing MADlib}
 MADlib is a library of analytic methods that can be installed and
 executed within a relational database engine that supports extensible
 SQL.  Details of the current contents of MADlib including methods and
-ports are provided in Table X and Table Y.
+ports are provided in Table~\ref{tab:methods} and Table~\ref{tab:ports}.
 
-The methods in MADLib are designed for the shared-nothing, “scale-out”
+The methods in MADLib are designed for the shared-nothing, ``scale-out''
 parallelism offered by modern parallel database engines, ensuring that
 computation is done close to the data.  The core functionality is
 written in declarative SQL statements, which orchestrate massively
@@ -129,7 +126,7 @@ computations that happen within the parallel database engine.
 
 MADlib is hosted publicly at GitHub, and readers are encouraged to
 browse the code and documentation via the MADlib website
-http://madlib.net.  The initial MADlib codebase reflects contributions
+\url{http://madlib.net}.  The initial MADlib codebase reflects contributions
 from both industry (Greenplum) and academia (UC Berkeley, the
 University of Wisconsin, and the University of Florida).  Code
 management and Quality Assurance efforts have been contributed by
@@ -137,51 +134,55 @@ Greenplum.  At this time, the project has begun welcoming
 contributions from additional parties, including both new methods and
 ports to new platforms.
 
-\begin{figure}
-[Table X: Current MADlib methods.  (We may want to rate these with markers for “maturity”.  Also have to decide what to include here from UW and UF.)]
+\begin{table}
+  \begin{tabular}{|l|l|}
+    \hline
+    {\bf Category} & {\bf Method} \\ \hline\hline
+    Supervised Learning
+          & Linear Regression\\
+          & Logistic Regression \\
+          & Naive Bayes Classification\\
+          & Decision Trees (C4.5)\\
+          & Support Vector Machines\\ \hline
+    Unsupervised Learning
+          & k-Means Clustering\\
+          & SVD Matrix Factorization\\
+          & Latent Dirichlet Allocation\\
+          & Association Rules\\ \hline
+    Decriptive Statistics
+          & Count-Min Sketch\\
+          & Flajolet-Martin Sketch\\
+          & Data Profiling\\
+          & Quantiles\\ \hline
+    Support Modules
+          & Sparse Vectors\\
+          & Array Operations\\
+          & Conjugate Gradiant Optimization \\\hline
+  \end{tabular}
+\caption{Current MADlib methods.  (We may want to rate these with markers for maturity.  Also have to decide what to include here from UW and UF.)}
+\label{tab:methods}
+\end{table}
 
-    * Supervised Learning
-          o Linear Regression
-          o Logistic Regression
-          o Naive Bayes Classification
-          o Decision Trees (C4.5)
-          o Support Vector Machines
-    * Unsupervised Learning
-          o k-Means Clustering
-          o SVD Matrix Factorization
-          o Latent Dirichlet Allocation
-          o Association Rules
-    * Decriptive Statistics
-          o Count-Min Sketch
-          o Flajolet-Martin Sketch
-          o Data Profiling
-          o Quantiles
-    * Support Modules
-          o Sparse Vectors
-          o Array Operations
-          o Conjugate Gradiant Optimization
-
-
-]
-\end{figure}
-
-\begin{figure}
-[Table Y: Current MADlib ports.]
-
-    * PostgreSQL, the widely-used open-source database server
-
-    * Greenplum Community Edition, a massively parallel (MPP) database server from EMC that is freely available in binary form for
-    * Greenplum Database: a commercially-supported MPP database server from EMC.
-
-\end{figure}
+\begin{table*} 
+  \begin{center}
+  \begin{tabular}{|p{1.25in}|p{1.75in}|p{3.5in}|}
+  \hline
+  {\bf DBMS} & {\bf R\&D Access} & {\bf Notes}\\ \hline
+    PostgreSQL& Open source & Single-node only. \\ \hline
+    Greenplum Database & ``Community Edition'' available free for non-production use & Shared-nothing parallel DBMS for clusters and multicore. \\ \hline
+     \end{tabular}
+\end{center}
+\caption{Current MADlib ports.}
+\label{tab:ports}
+\end{table*}
 
 \section{Goals of the Project} 
 The primary goal of the MADlib open-source project is to accelerate
 innovation and technology transfer in the community via a shared
 library of scalable in-database analytics, much as the CRAN library
-serves the statistics community [CRAN].  Unlike CRAN, which is
-customized to the R analytics engine, we hope that MADlib’s grounding
-in standard SQL can foster community efforts to port the methods to a
+serves the statistics community~\cite{cran}.  Unlike CRAN, which is
+customized to the R analytics engine, we hope that MADlib's grounding
+in standard SQL will lead to community ports to a
 variety of parallel database engines.
 
 In addition to its primary goal, MADlib can serve a number of other
@@ -189,61 +190,65 @@ purposes for the community.  As a standard and relatively mature
 open-source platform, it enables apples-to-apples comparisons that can
 be deeper than the traditional TPC benchmarks. For example, the DBMS
 backend can be held constant, so that two algorithms for the same task
-(e.g. entity extraction) can be compared for runtime and answer
+(e.g., entity extraction) can be compared for runtime and answer
 quality.  Similarly, as MADlib is ported to more platforms, an
 algorithm can be held constant, and two backend DBMS engines can be
 compared for performance.  This latter comparison has been notoriously
 difficult in the past, due to the closed-source, black-box nature of
-“data mining” and analytic toolkits that were not only customized to
+``data mining'' and analytic toolkits that were not only customized to
 specific platforms, but also lacked transparency on their analytic
 algorithms.  
 
 \subsection{Why Databases?}
 
-For decades, SAS has been the king of enterprise analytics: it has a
-large customer base and its proposed analytics methodologies have
-become engrained in the modern enterprise. Nevertheless, usurpers loom
-on the horizon. Currently, the analytics life-cycle advocated by SAS
-is called SEMMA (Sample, Explore, Modify, Model, Assess). The EMMA
-portion of this cycle clearly identifies a set of fundamental tasks
-that an analyst needs to perform, but the question that is giving the
-usurpers momentum is simple: why sample? Sampling throws away the very
-competitive advantage that customers hope to get from acquiring their
-valuable data. Sampling decouples between the human intelligence in
-modeling from where these insights are put to use (on the entire
-data). This decoupling makes analysts less effective: they must guess
-about the statistical and performance robustness of their model. If
-they guess incorrectly, they may not know about it for weeks or
-months. (SAID BETTER BY PEOPLE WHO TALK GET TO REGULARLY TALK TO
-CUSTOMERS)
+For decades, statistical packages like SAS, Matlab and R have been the key tools for deep analytics, and the practices surrounding these tools have been elevated into widely-used traditional methodologies.  
+% DELETED -- better not to pick fights with specific vendors.  -JMH
+% SAS in particular has a
+% large customer base, and its proposed analytics methodologies have
+% become engrained in the modern enterprise. Nevertheless, usurpers loom
+% on the horizon. 
+One standard analytics methodology advocated in this domain
+is called SEMMA: Sample, Explore, Modify, Model, Assess. The ``EMMA''
+portion of this cycle identifies a set of fundamental tasks
+that an analyst needs to perform, but the first, ``S'' step makes less and less sense in many settings today.  The costs of computation and storage are increasingly cheap, and entire data sets can often be processed efficiently by a cluster of computers.  Meanwhile, competition for extracting value from data has become increasingly refined.  Consider fiercely competitive application domains like online advertising or politics.  It is of course important to target ``typical'' people (customers, voters) that would be captured by sampling the database.  Because SEMMA is standard practice, optimizing for a sample provides no real advantage.  The competition today is to extract advantages in the long tail of ``special interests'', a practice known as ``microtargeting'', ``hypertargeting'' or ``narrowcasting''.  In that context, the first step of SEMMA essentially defeats the remaining four steps, leading to simplistic, generalized decision-making that may not translate well to small populations in the tail of the distribution.
+% throws away the very
+% competitive advantage that customers hope to get from acquiring their
+% valuable data. Sampling decouples the human intelligence in
+% modeling from where these insights are put to use (on the entire
+% data). This decoupling makes analysts less effective: they must guess
+% about the statistical and performance robustness of their model. If
+% they guess incorrectly, they may not know about it for weeks or
+% months. (SAID BETTER BY PEOPLE WHO TALK GET TO REGULARLY TALK TO
+% CUSTOMERS)
 
-Driven in part by this observation, momentum has been gathering around
-pushing analytics tools to the data. One popular alternative is to
-push the tools directly to so-called Big Data processing platforms
-notably, Apache Hadoop. For example, the ope source Mahout project
-aims to push machine learning tools in Hadoop processing and has
-spawned interest in academia and industry[Stanford Paper]. This is
-certainly an attractive path to solution (and is being advocated by
-major players including IBM).
+Driven in part by this observation, momentum has been gathering around efforts to develop scalable full-dataset analytics. One popular alternative is to
+push the statistical methods directly into so-called Big Data processing platforms---notably, Apache Hadoop. For example, the open-source Mahout project
+aims to implement machine learning tools within Hadoop, harnessing
+ interest in both academia and industry~\cite{mlformr,mahout}. This is
+certainly an attractive path to solution, and is being advocated by
+major players including IBM~\cite{}.
 
-Nevertheless, valuable data is likely to continue to live in
-relational databases for some time to come: there is an entire
+Regardless of the adoption curves of these new systems, large volumes of valuable data are likely to reside in
+relational databases for some time to come. There is a rich
 ecosystem of tools, know-how, and organizational requirements that
-will keep valuable data inside the database. For these users, there
-are drawbacks with the Hadoop approach: its performance is untenably
-slow compared to database processing as it must provide higher levels
-of fault tolerance than other systems. Additionally, the sheer number
-of machines that are required to achieve good performance of makes it
-unclear that Hadoop systems are cost-effect in all but the most scale
-heavy environments.
+encourage this.  For these cases, it would be helpful to push statistical methods into the DBMS. As we will see, massively parallel databases form a surprisingly useful platform for sophisticated analytics. 
 
-For such users, Greenplum provides a cost-effective solution for
-scalable analytics. It does not require a complicated and error-prone
-import/export cycle to Haddop nor forces the user to work over a
-snapshot of the data: one works on the raw data and does their
-analysis on production (or very near-to-production) data. This allows
-user to maximize the value proposition of storing all that data in a
-cost-effective manner.
+%% There is nothing to be gained by pissing on Hadoop.  -- JMH
+% there
+% are drawbacks with the Hadoop approach: its performance is untenably
+% slow compared to database processing as it must provide higher levels
+% of fault tolerance than other systems. Additionally, the sheer number
+% of machines that are required to achieve good performance of makes it
+% unclear that Hadoop systems are cost-effect in all but the most scale
+% heavy environments.
+% 
+% For such users, Greenplum provides a cost-effective solution for
+% scalable analytics. It does not require a complicated and error-prone
+% import/export cycle to Haddop nor forces the user to work over a
+% snapshot of the data: one works on the raw data and does their
+% analysis on production (or very near-to-production) data. This allows
+% user to maximize the value proposition of storing all that data in a
+% cost-effective manner.
 
 %%   Q1: why not SAS?  Q2: what about the fact that SQL nerds don’t do
 %%   data analysis?  Q3: does Hadoop and Mahout make this irrelevant?
@@ -282,13 +287,14 @@ corporate backing, rather than a closed-source corporate effort with
 academic consulting.  This decision was motivated by a number of
 factors, including the following:
 
-    * The benefits of customization: Statistical methods are rarely used as turnkey solutions.  As a result, it is common for data scientists to want to modify and adapt canonical models and methods to their purposes.  This is a very tangible benefit of open source libraries over traditional closed-source packages. Moreover, in an open-source community there is a process and a set of positive incentives for useful modifications to be shared back to the benefit of the entire community.
-    * Valuable data vs. valuable software:  In many emerging business sectors, the corporate value is captured in the data, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community engage in the task of improving their software.  This open-source effort can also be synergistic for software vendors that provide platforms to customers who run open-source code.  Most IT shops today run a mix of open-source and proprietary software, and it is wise for software vendors to position themselves intelligently in that context.  For many database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.
-    * Closing the research-to-adoption loop:  Very few companies that depend on data analysis have the capacity to develop significant in-house research into computing or data science.  On the other hand, it is hard for academics doing computing research to understand and influence the way that analytic processes are done in the field.  An open source project like MADlib has the potential to connect academic researchers not only to industrial software vendors, but also directly to the end-users of analytics software.  This can improve technology transfer from academia into practice without requiring database software vendors to serve as middlemen.  It can similarly enable end-users in specific application domains to influence the research agenda in academia.
-    * Level the playing field and encourage innovation.  Over the past two decades, database software vendors have developed proprietary data mining toolkits consisting of textbook algorithms.  It is hard to assess their relative merits.  Meanwhile, other communities in machine learning and internet advertising have also been busily innovating, but their code is typically not well packaged for reuse, and the code that is available was not written to run in a database system.  Meanwhile, none of these projects has demonstrated the vibrancy and breadth we see in the open-source community surrounding R and its CRAN package.  A robust open-source project like MADlib can bring the entire database community up to a baseline level of competence on standard statistical algorithms, remove the corporate “FUD”  from proprietary toolkits that has held back innovation, and help focus a large community on innovation and technology transfer.
+\begin{itemize}
+    \item \textbf{The benefits of customization}: Statistical methods are rarely used as turnkey solutions.  As a result, it is common for data scientists to want to modify and adapt canonical models and methods (e.g., regression, classification, clustering) to their own purposes.  This is a very tangible benefit of open source libraries over traditional closed-source packages. Moreover, in an open-source community there is a process and a set of positive incentives for useful modifications to be shared back to the benefit of the entire community.
+    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community engage in the task of improving their software.  This open-source effort can also be synergistic for software vendors that provide platforms to customers who run open-source code.  Most IT shops today run a mix of open-source and proprietary software, and it is wise for software vendors to position themselves intelligently in that context.  For many database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.
+    \item \textbf{Closing the research-to-adoption loop}:  Very few companies that depend on data analysis have the capacity to develop significant in-house research into computing or data science.  On the other hand, it is hard for academics doing computing research to understand and influence the way that analytic processes are done in the field.  An open source project like MADlib has the potential to connect academic researchers not only to industrial software vendors, but also directly to the end-users of analytics software.  This can improve technology transfer from academia into practice without requiring database software vendors to serve as middlemen.  It can similarly enable end-users in specific application domains to influence the research agenda in academia.
+    \item \textbf{Leveling the playing field, encouraging innovation}:  Over the past two decades, database software vendors have developed proprietary data mining toolkits consisting of textbook algorithms.  It is hard to assess their relative merits.  Meanwhile, other communities in machine learning and internet advertising have also been busily innovating, but their code is typically not well packaged for reuse, and the code that is available was not written to run in a database system.  Meanwhile, none of these projects has demonstrated the vibrancy and breadth we see in the open-source community surrounding R and its CRAN package.  A robust open-source project like MADlib can bring the entire database community up to a baseline level of competence on standard statistical algorithms, remove the corporate \textit{FUD}  from proprietary toolkits that has held back innovation, and help focus a large community on innovation and technology transfer.
+\end{itemize}
 
-
-\subsection{A New Model for Open Source Partnerships}
+\subsection{A Model for Open Source Collaboration}
 
 The design of MADlib comes at a time when the connections between
 open-source software and academic research seem particularly frayed.
@@ -302,53 +308,43 @@ Today, we expect successful open source projects to be quite mature,
 often comparable to commercial products.  To achieve this level of
 maturity, most successful open-source projects have one or more major
 corporate backers who pay some number of committers and provide
-professional support for QA.  This kind of investment is typically
+professional support for Quality Assurance (QA).  This kind of investment is typically
 made in familiar software packages that tend not to feature new
-research ideas.  Many of the most popular examples—Hadoop, Linux,
-OpenOffice—are in a direct sense clones of well-identified,
+research ideas.  Many of the most popular examples---Hadoop, Linux,
+OpenOffice---are direct clones of well-identified,
 pre-existing commercial efforts.
 
-MADlib is in part an experiment in reconnecting the innovation of
-academic research with the professionalism of modern open-source
-software. Rather than having industry provide financial backing for a
-campus effort in software engineering, it attempts to enhance campus
-research with industrial software engineering staff and processes.
-This leverages a strength of industry that cannot be replicated on
+MADlib is making an explicit effort to back up academic research with professional software engineering.  Many academic research projects are supported by financial grants and gifts from companies.  In MADlib, the corporate donation consists of significant work hours from professional software engineers.  This leverages a strength of industry that cannot be replicated on
 campus.  Companies can hire high-quality, experienced software
 engineers with the attraction of well-compensated, long-term career
 paths.  Equally important, software shops can offer an entire software
 engineering pipeline that cannot be replicated on a university campus:
 this includes QA processes encompassing specialized QA engineers as
 well as software testing procedures and hardware platforms for
-automated testing at scale.  The hope is that the corporate investment
-in staffing of projects like MADlib can both enable a variety of
-academic open-source research, and speed its integration into
-commercial usage.
+automated testing at scale.  The hope is that the corporate staffing of research projects like MADlib can both enable
+academic open-source research, and speed technology transfer to industry.
 \subsection{Status and Directions for Growth}
 
-The initial beta release of MADlib is focused on establishing its
-value, and laying the groundwork for its future evolution.  First,
-there was the non-trivial work of building the general-purpose
+The initial beta release of MADlib in {\bf MONTH} of 2012 was focused on establishing a baseline of 
+valuable functionality, while laying the groundwork for future evolution.  The beta development began with the non-trivial work of building the general-purpose
 framework described in Section~\ref{sec:gen}.  Additionally, we wanted robust
 implementations of textbook methods that were most frequently
 requested from customers we met through Greenplum.  Finally, we wanted
-to host a small number of techniques from researchers both within the
-core MADlib team, and from university groups working on related
-topics.
+to validate MADlib as a research vehicle, by fostering a small number of  university groups working in the area to experiment with the platform and get their code disseminated.
 
 % Discuss the initial selection of methods.  
 
 
 
-Given this initial release, there is now room for growth in multiple
+With the recent MADlib release completed, there is room for growth in multiple
 dimensions.  The library infrastructure itself is still in beta, and
 has room to mature.  There is room for enhancements in its core
 treatment of mathematical kernels (e.g. linear algebra over both
 sparse and dense matrices) especially in out-of-core settings.  And of
-course there will always be an appetite for additional models and
-methods, both textbook techniques and cutting-edge research.  Finally,
-there is interest beginning in ports to other DBMSs. This is a
-mechanical but a non-trivial software development effort that will
+course there will always be an appetite for additional statistical models and
+algorithmic methods, both textbook techniques and cutting-edge research.  Finally,
+there is nascent interest on the MADlib newsgroup in ports to other DBMSs. Porting MADlib across DBMSs is a
+mechanical but non-trivial software development effort that will
 span the infrastructure (e.g. the need for a cross-platform
 installer), the methods themselves (particularly the user-defined
 functions) and the software engineering infrastructure (e.g. the need
@@ -356,14 +352,14 @@ for QA support on additional database engines).
 
 \section{MADlib Architecture}
 \label{sec:gen}
-The core of traditional SQL—SELECT...FROM...WHERE...GROUP BY...—is
+The core of traditional SQL---\texttt{SELECT... FROM... WHERE... GROUP BY}---is
 quite a powerful harness for orchestrating bulk data processing across
 one or many processors and disks.  It is also a portable, native
 language supported by range of widely-deployed open source and
-commercial database engines.  This makes SQL a very attractive
+commercial database engines.  This makes SQL an attractive
 framework for writing data-intensive programs.  Ideally, we would like
 MADlib methods to be written entirely in straightforward and portable
-SQL. Unfortunately, the portable core of “vanilla” SQL is often not
+SQL. Unfortunately, the portable core of ``vanilla'' SQL is often not
 quite enough to express the kinds of algorithms needed for advanced
 analytics.
 
@@ -382,24 +378,19 @@ well-tuned linear algebra methods.
 We proceed to discuss issues involved at both of these levels in a bit more detail, and solutions we chose to implement in MADlib.
 \subsection{Macro-Programming (Orchestration)}
 
-A scalable method for linear algebra depends upon intelligent
+A scalable method for linear algebra depends upon divide-and-conquer techniques: intelligent
 partitioning of the matrix, and a pattern to process the pieces and
 merge results back together.  This partitioning and dataflow is
 currently outside the scope of a traditional query optimizer or
 database design tool.  But there is a rich literature from scientific
-computing on these issues that can inform in-database implementations
-[Demmel].  And most database engines shine in orchestrating the
+computing on these issues that can inform in-database implementations~\cite{demmel}.  Once data is properly partitioned, database engines shine at orchestrating the
 resulting data movement of partitions and the piecewise results of
-computation: relational query engines are at heart efficient routers
-for orchestrating the matching of pieces of data that must coexist in
-memory for processing a scalar function.
+computation.
 
-Still, at the high level of orchestrating data movement, that is, the
-bulk inputs and outputs to program components, we ran across two main
-limitations in standard SQL.  We solved these problems using simple
-script-based UDF driver functions, which in turn kick off more
-involved SQL queries.  A scripting language like Python is acceptable
-for these driver functions, since their logic is invoked only
+In designing the high-level orchestration of data movement for analytics, we ran across two main
+limitations in standard SQL.  In both cases we solved our problems using driver code written in simple
+script-based user-defined functions (UDFs), which in turn kick off more
+involved SQL queries.  When implemented correctly, the performance of the scripting language code is not critical, since its logic is invoked only
 occasionally to kick off much larger bulk tasks that are executed by
 the core database engine.
 
@@ -409,7 +400,7 @@ schema of their input tables, and produce output tables with a fixed
 schema.  In many cases we want to write ``templated'' queries that
 work over arbitrary schemas, with the details of column names and
 types to be filled in later.  For example, the multivariate linear
-regression algorithm of Section YY is designed to run over any subset
+regression algorithm of Section~\ref{sec:regression} is designed to run over any subset
 of the columns of an input table, producing an output table including
 the same columns as well as a predicted output column.  SQL helps with
 problems of data types and casting, but cannot help with the variable
@@ -421,35 +412,35 @@ each method that needs it.  In future we plan to support this pattern
 as a Python library that ships with MADlib.
 
 A second problem is the prevalence of iterative algorithms for many
-methods in statistics, particularly stochastic methods like gradiant
-descent and monte carlo simulation in which the number of iterations
+methods in statistics, particularly stochastic methods like Gradiant
+Descent and Monte Carlo simulation in which the number of iterations
 is determined by a data-dependent stopping condition at the end of
 each round.  There are multiple SQL-based workarounds for this
 problem, which depend on the context.  In order to drive independent
 iterations, it is often simplest (and very efficient) to use a
-set-oriented join, this is an approach that we used to implement
-Bootstrap sampling in the original MAD Skills paper [MADSkills].  For
+set-oriented join---this is an approach that we used to implement
+Bootstrap sampling in the original MAD Skills paper~\cite{MADSkills}.  For
 settings where the current iteration depends on previous iterations,
-SQL's windowed aggregate feature can sometimes work, Wang, et al. took
-this approach to implement in-database MCMC inference [Daisy11].  Most
+SQL's windowed aggregate feature can sometimes work.   Wang, et al. took
+this approach to implement in-database MCMC inference~\cite{Daisy11}.  Most
 generally, it is possible to use the recursion features of SQL to
-perform iteration with arbitrary stopping conditions, this was used by
-Wang, et al. to implement Viterbi inference [Daisy10].  Unfortunately,
+perform iteration with arbitrary stopping conditions---this was used by
+Wang, et al.\ to implement Viterbi inference~\cite{Daisy10}.  Unfortunately,
 the level of support for SQL's windowed aggregates and recursion
-varies greatly across database products, and does not form a reliable
+varies across database products, and does not form a reliable
 basis for portability.
 
 As a result, in MADlib we typically implement iterative methods by
 writing a driver UDF in Python to control the iteration.  A standard
 pitfall in this style of programming is to pull a large amount of data
 out of the database and into the driver code; this becomes a
-scalbility bottleneck as the driver code typically does not
+scalability bottleneck since the driver code typically does not
 parallelize and hence pulls all data to a single node.  We avoid this
 via a design pattern in which the driver UDF kicks off each iteration
-and stages its output into a temporary table via a CREATE TEMP TABLE
-AS SELECT... It then interrogates the resulting temp table using small
+and stages its output into a temporary table via \texttt{CREATE TEMP TABLE
+AS SELECT...} It then interrogates the resulting temp table using small
 aggregate queries as needed.  As a result, all large-data movement is
-done within the parallel database engine and its buffer pool.
+done within the database engine and its buffer pool.
 Database engines typically provide efficient parallelism as well as
 buffering and spill files on disk for large temp tables, so this
 pattern is quite efficient in practice.
@@ -460,52 +451,54 @@ database engine must very efficiently invoke the single-node code that
 performs arithmetic on those chunks.  For dense matrices, the standard
 practice is to write UDFs in C or C++ that use the database engine to
 make native calls to an open-source library like LAPACK.  Sparse
-matrices are less well-handled by standard math libraries, and require
+matrices are not as well-handled by standard math libraries, and require
 more customization for efficient representations both on disk and in
 memory.  We chose to write our own sparse matrix library in C for
-MADlib, which XXX SAY SOMETHING ABOUT THE REPRESENTATION.  Both of
+MADlib, which {\bf XXX SAY SOMETHING ABOUT THE REPRESENTATION}.  Both of
 these solutions require careful low-level coding, and formed part of
-the overhead of getting MADlib off the ground.
+the overhead of getting MADlib started.
 
 The specifics of a given method's linear algebra can be coded in a
 low-level way using loops of basic arithmetic in a language like C,
 but it is nicer if they can be expressed in a higher-level syntax that
 captures the semantics of the linear algebra at the level of matrices
 and arrays.  We provide a C++ abstraction layer in MADlib for this
-type of code.  Example: Linear Regression Background
+type of code.  
+
+\textbf{Example: Linear Regression Background}
 
 \begin{itemize}
-    \item We assume that the dependent variable yi is a linear function of a vector of independent variables xi, plus some noise.
+    \item We assume that the dependent variable $y_i$ is a linear function of a vector of independent variables $x_i$, plus some noise.
     \item Our data set consists of samples according to this model.
     \item Estimating coefficients using least-squares regression is known to maximize the likelihood of our sample set (given the model) if the noise terms in each sample are uncorrelated and normally distributed with mean 0 and arbitrary but fixed variance.
-    \item The least-squares estimator is c=(XTX)-1XTy, where y is the column vector of the random variates yi and X is the design matrix having xiT as rows
+    \item The least-squares estimator is $c=(X^TX)-1X^Ty$, where $y$ is the column vector of the random variates $y_i$ and $X$ is the design matrix having $x_iT$ as rows
 \end{itemize}
 
 Implementation
 \begin{itemize}
     \item As user-define aggregate
 
-    \item Idea: Both XTX and XTy can be computed using a linear fold (in functional-programming terms).
+    \item Idea: Both $X^TX$ and $X^Ty$ can be computed using a standard single-pass aggregate.
       \begin{enumerate}
-         \item Matrix multiplication can be decomposed into the sum of products of submatrices. Hence, the combine operation is associative and thus parallelizable at the row level.
-         \item As a final (non-parallelized) step, we compute the pseudo-inverse of XTX and multiply with XTy.
+         \item Matrix multiplication can be decomposed into the sum of products of submatrices. Hence, the UDA's merge operation is associative and thus parallelizable at the row level.
+         \item As a final (non-parallelized) step, we compute the pseudo-inverse of $X^TX$ and multiply with $X^Ty$.
       \end{enumerate}
     \item Implementation in PostgreSQL or Greenplum:
       \begin{enumerate}
-         \item User-defined aggregates consist of a “transition function” that combines an accumulation state with with the next row
-         \item Greenplum parallelization relies on also having a “merge function” that combines two accumulation states
+         \item User-defined aggregates consist of a \textit{transition function} that combines an accumulation state with with the next row
+         \item Greenplum parallelization relies on also having a `merge function' that combines two accumulation states
       \end{enumerate}
      \item Performance
 \begin{itemize}
           \item Runtime measurements fit the theoretical asymptotical runtime behavior fairly well. Roughly, the relevant terms are
 \[            a * k^3 + (b * n * k^2 + c)/p \]
 
-            where k is the number of independent variables, n is the number of rows, p is the number of segments, and a, b, and c are constants. In particular: If the quadratic term dominates (\# independent variables < couple hundred), Greenplum has a linear speed-up in the number of segments. On current hardware, computing the pseudo-inverse with the default BLAS is in the order of more than a minute if the number of independent variables reaches one thousand. In that case, the cubic term often dominates.
+            where $k$ is the number of independent variables, $n$ is the number of rows, $p$ is the number of segments, and $a, b,$ and $c$ are constants. In particular: If the quadratic term dominates (\# independent variables $<$ couple hundred), Greenplum has a linear speed-up in the number of segments. On current hardware, computing the pseudo-inverse with the default BLAS is in the order of more than a minute if the number of independent variables reaches one thousand. In that case, the cubic term often dominates.
           \item There are no performance differences between PostgreSQL 9.1.1 (both in single and multi-user mode) and GP 4.1 in running the aggregate function on on a single core.
           \item Single-core performance among laptop CPUs (like the Core i5 540M) and server CPUs (like the Xeon X5680 in a DCA) does not differ much. Typically even less than what the difference in clock speeds might suggest.
           \item BLAS implementations are typically far from
             perfect. It turns out that computing $x^T * x$ for a row
-            vector x is ca. 3 times slower than computing $y * y^T$
+            vector $x$ is about $3\times$ slower than computing $y * y^T$
             for a column vector of the same dimension, both with the
             reference BLAS implementation and with Apple's Accelerate
             framework.  
@@ -520,14 +513,14 @@ Implementation
         \end{itemize}
 
 \end{itemize}
-      \subsection{P MADlib Performance}
-
+      \subsection{MADlib Performance}
+\begin{verbatim}
       Linear Regression
       OS: Red Hat Enterprise Linux Server release 5.5 (Tikanga)
       GPDB: 4.1.1.3 build 4, 10 segments without mirrors in each machine.
       GCC version for GPDB: 4.4.2, Flags: -O3
       This is what I find on my Linux VM. Huanming, could you check that? I don't have permission to access your Greenplum binaries on gpdb1
-
+\end{verbatim}
 
 \begin{figure*}
 \centering
@@ -608,7 +601,7 @@ Implementation
 \end{alltt}
 
 \section{Related Work: Ecosystem of Scalable Analytics}
-      Traditional analysts bring data to the code: see the SAS “SEMMA”
+      Traditional analysts bring data to the code: see the SAS \textit{SEMMA}
       approach.  Import/export cycle with SAS, R, etc.  This will
       always exist, but it will be increasingly less useful.  There
       are active efforts to scale and parallelize these, but those are
@@ -618,14 +611,15 @@ Implementation
       The new model of scalable analytics depends on bringing the code
       to the data in a scalable storage/analysis framework.  So you
       can structure the space in terms of where the data lives.  Not
-      going to get into “what’s better” here -- truth is that there
+      going to get into \textit{what's better} here -- truth is that there
       are pros and cons, and many organizations use more than one.
 
       Things are really in flux.  Segments kinda like so:
-          o SQL universe has proprietary “data mining” toolkits, many of which date back to the 1990s.  These cost a lot and evolve very slowly.  Cite the Teradata research papers, IBM white book.  MADlib is an effort to raise all boats in this domain.
-          o HDFS/Hadoop universe is burgeoning.  Mahout is the center of energy for ML algorithms right now. (also System ML?)  Exciting trend there, and while the ML libraries are still quite young, they may evolve quickly.
-          o A variety of emerging in-memory distributed systems like Graphlab, Vowpal Wabbit, Spark, Pregel/Giraph.  These merit a close look.  Some of them present alternative architectures to traditional dataflow parallelism (e.g. GraphLab, VW).  Others are targeted to problems like graph algorithms that may prove to be weak spots for more general purpose systems (e.g. Graphlab, Pregel/Giraph).
-
+      \begin{itemize}
+          \item SQL universe has proprietary {\em data mining} toolkits, many of which date back to the 1990s.  These cost a lot and evolve very slowly.  Cite the Teradata research papers, IBM white book.  MADlib is an effort to raise all boats in this domain.
+          \item HDFS/Hadoop universe is burgeoning.  Mahout is the center of energy for ML algorithms right now. (also System ML?)  Exciting trend there, and while the ML libraries are still quite young, they may evolve quickly.
+          \item A variety of emerging in-memory distributed systems like Graphlab, Vowpal Wabbit, Spark, Pregel/Giraph.  These merit a close look.  Some of them present alternative architectures to traditional dataflow parallelism (e.g. GraphLab, VW).  Others are targeted to problems like graph algorithms that may prove to be weak spots for more general purpose systems (e.g. Graphlab, Pregel/Giraph).
+        \end{itemize}
 
  \section{MADlib Beta Release: Status Report and Future Direction}
       Engineering team leading to Beta was XX Greenplum heads + 1
@@ -635,11 +629,13 @@ Implementation
       constitutes YYY heads to date.
 
       Expand the following from the user docs.  For each method, should be refs to literature on the algorithms being used.
-          o Stat and linear algebra fundamentals
-          o Descriptive statistics (deterministic, and one-pass approximation algorithms)
-          o Regression
-          o Unsupervised learning/Data mining
-          o Supervised learning
+      \begin{itemize}
+          \item Stat and linear algebra fundamentals
+          \item Descriptive statistics (deterministic, and one-pass approximation algorithms)
+          \item Regression
+          \item Unsupervised learning/Data mining
+          \item Supervised learning
+        \end{itemize}
 
 \subsection{Wisconsin Contributions: Toward a Unified Architecture}
 
@@ -1008,10 +1004,11 @@ key-word search and more advanced)
 
 
 \subsection{MADlib Futures}
-          o Development of additional methods based on case studies in industry.  We welcome input on this front.
-          o Expand academic involvement.  Solicitation of experimental research methods from academia.  Currently lined up projects at U. Wisconsin and U. Florida (see if we can get Chris and Daisy testimonials for now; code soon.)  We welcome more collaboration with interested academics.
-          o Continued robustification of the codebase, with help from QA and engineering contributions at EMC/Greenplum on the PostgreSQL and Greenplum platforms.  We welcome offers of support from other teams to develop and maintain ports on other open-source and commercial platforms.
-
+\begin{itemize}
+          \item Development of additional methods based on case studies in industry.  We welcome input on this front.
+          \item Expand academic involvement.  Solicitation of experimental research methods from academia.  Currently lined up projects at U. Wisconsin and U. Florida (see if we can get Chris and Daisy testimonials for now; code soon.)  We welcome more collaboration with interested academics.
+          \item Continued robustification of the codebase, with help from QA and engineering contributions at EMC/Greenplum on the PostgreSQL and Greenplum platforms.  We welcome offers of support from other teams to develop and maintain ports on other open-source and commercial platforms.
+\end{itemize}
 \section{Conclusion}
 
 
