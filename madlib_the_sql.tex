@@ -5,17 +5,17 @@
 % Fixed the equation on page 3 to prevent line overflow. (AhmetSacan, Sep2012)
 
 \documentclass{vldb}
+\usepackage{times}
 \usepackage{graphicx}
 \usepackage{balance}  % for  \balance command ON LASMAD PAGE  (only there!)
-\usepackage{alltt,algorithm}
+\usepackage{alltt,algo}
 \usepackage{url}
 
 \begin{document}
 
 % ****************** TITLE ****************************************
 
-\title{Introducing MADlib}
-\subtitle{MAD Skills, the SQL}
+\title{Introducing MADlib\\{\Large (MAD Skills, the SQL)}}
 
 
 \numberofauthors{11} %  in this sample file, there are a *total*
@@ -50,9 +50,13 @@
   background that led to its beginnings, and the motivation for its
   open-source nature.  We provide an overview of the library's
   architecture and design patterns, and provide a detailed description
-  of one example method in that context.  Finally, we report on early
+  of one example method in that context.  We then report on initial 
+  efforts incorporating academic research into MADlib, which is one of the 
+  project's goals. Finally, we report on early
   performance results in the open-source PostgreSQL DBMS, and scaling
-  results in the Greenplum parallel DBMS.  MADlib is now freely
+  results in the Greenplum parallel DBMS.  
+  
+  MADlib is freely
   available in beta form at http://madlib.net, and the project is open
   for contributions of both new methods, and ports to additional
   database platforms.  
@@ -82,7 +86,7 @@ statistical models and algorithms for analysis.  {\em Data Science} is a
 name that is gaining currency for the industry practices evolving
 around these workloads.
 
-Data scientists make use of database engines in a very different way than traditional practice in data warehousing.  Rather than carefully
+Data scientists make use of database engines in a very different way than traditional data warehousing professionals.  Rather than carefully
 designing global schemas and ``repelling'' data until it is integrated,
 they load data into private schemas in whatever form is convenient.  Rather than focusing on simple OLAP-style drill-down reports, they implement rich statistical
 models and algorithms in the database, using extensible SQL as a
@@ -110,8 +114,8 @@ the various interested constituencies.  This led to the design of
 \subsection*{Introducing MADlib}
 MADlib is a library of analytic methods that can be installed and
 executed within a relational database engine that supports extensible
-SQL.  Details of the current contents of MADlib including methods and
-ports are provided in Table~\ref{tab:methods} and Table~\ref{tab:ports}.
+SQL.  A snapshot of the current contents of MADlib including methods and
+ports is provided in Table~\ref{tab:methods} and Table~\ref{tab:ports}.  This set of methods and ports is intended to grow over time.
 
 The methods in MADLib are designed for the shared-nothing, ``scale-out''
 parallelism offered by modern parallel database engines, ensuring that
@@ -124,7 +128,7 @@ tasks that require iteration and/or structure definition are coded in
 Python driver code, which is used only to kick off the data-rich
 computations that happen within the parallel database engine.
 
-MADlib is hosted publicly at GitHub, and readers are encouraged to
+MADlib is hosted publicly at github, and readers are encouraged to
 browse the code and documentation via the MADlib website
 \url{http://madlib.net}.  The initial MADlib codebase reflects contributions
 from both industry (Greenplum) and academia (UC Berkeley, the
@@ -178,7 +182,7 @@ ports to new platforms.
 
 \section{Goals of the Project} 
 The primary goal of the MADlib open-source project is to accelerate
-innovation and technology transfer in the community via a shared
+innovation and technology transfer in the Data Science community via a shared
 library of scalable in-database analytics, much as the CRAN library
 serves the statistics community~\cite{cran}.  Unlike CRAN, which is
 customized to the R analytics engine, we hope that MADlib's grounding
@@ -196,7 +200,7 @@ algorithm can be held constant, and two backend DBMS engines can be
 compared for performance.  This latter comparison has been notoriously
 difficult in the past, due to the closed-source, black-box nature of
 ``data mining'' and analytic toolkits that were not only customized to
-specific platforms, but also lacked transparency on their analytic
+specific platforms, but also lacked transparency into their analytic
 algorithms.  
 
 \subsection{Why Databases?}
@@ -228,10 +232,10 @@ aims to implement machine learning tools within Hadoop, harnessing
 certainly an attractive path to solution, and is being advocated by
 major players including IBM~\cite{}.
 
-Regardless of the adoption curves of these new systems, large volumes of valuable data are likely to reside in
-relational databases for some time to come. There is a rich
+At the same time that the Hadoop ecosystem has been evolving, the SQL-based analytics ecosystem has grown rapidly as well, and large volumes of valuable data are likely to reside in
+relational databases for many years to come. There is a rich
 ecosystem of tools, know-how, and organizational requirements that
-encourage this.  For these cases, it would be helpful to push statistical methods into the DBMS. As we will see, massively parallel databases form a surprisingly useful platform for sophisticated analytics. 
+encourage this.  For these cases, it would be helpful to push statistical methods into the DBMS. And as we will see, massively parallel databases form a surprisingly useful platform for sophisticated analytics.  MADLib currently targets this environment of in-database analytics.
 
 %% There is nothing to be gained by pissing on Hadoop.  -- JMH
 % there
@@ -289,7 +293,7 @@ factors, including the following:
 
 \begin{itemize}
     \item \textbf{The benefits of customization}: Statistical methods are rarely used as turnkey solutions.  As a result, it is common for data scientists to want to modify and adapt canonical models and methods (e.g., regression, classification, clustering) to their own purposes.  This is a very tangible benefit of open source libraries over traditional closed-source packages. Moreover, in an open-source community there is a process and a set of positive incentives for useful modifications to be shared back to the benefit of the entire community.
-    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community engage in the task of improving their software.  This open-source effort can also be synergistic for software vendors that provide platforms to customers who run open-source code.  Most IT shops today run a mix of open-source and proprietary software, and it is wise for software vendors to position themselves intelligently in that context.  For many database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.
+    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community adopt and improve their software.  Open-source efforts can also be synergistic for vendors that sell commercial software to customers who run open-source code.  Most IT shops today run a mix of open-source and proprietary software, and it is wise for software vendors to position themselves intelligently in that context.  For many database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.
     \item \textbf{Closing the research-to-adoption loop}:  Very few companies that depend on data analysis have the capacity to develop significant in-house research into computing or data science.  On the other hand, it is hard for academics doing computing research to understand and influence the way that analytic processes are done in the field.  An open source project like MADlib has the potential to connect academic researchers not only to industrial software vendors, but also directly to the end-users of analytics software.  This can improve technology transfer from academia into practice without requiring database software vendors to serve as middlemen.  It can similarly enable end-users in specific application domains to influence the research agenda in academia.
     \item \textbf{Leveling the playing field, encouraging innovation}:  Over the past two decades, database software vendors have developed proprietary data mining toolkits consisting of textbook algorithms.  It is hard to assess their relative merits.  Meanwhile, other communities in machine learning and internet advertising have also been busily innovating, but their code is typically not well packaged for reuse, and the code that is available was not written to run in a database system.  Meanwhile, none of these projects has demonstrated the vibrancy and breadth we see in the open-source community surrounding R and its CRAN package.  A robust open-source project like MADlib can bring the entire database community up to a baseline level of competence on standard statistical algorithms, remove the corporate \textit{FUD}  from proprietary toolkits that has held back innovation, and help focus a large community on innovation and technology transfer.
 \end{itemize}
@@ -314,11 +318,11 @@ research ideas.  Many of the most popular examples---Hadoop, Linux,
 OpenOffice---are direct clones of well-identified,
 pre-existing commercial efforts.
 
-MADlib is making an explicit effort to back up academic research with professional software engineering.  Many academic research projects are supported by financial grants and gifts from companies.  In MADlib, the corporate donation consists of significant work hours from professional software engineers.  This leverages a strength of industry that cannot be replicated on
+MADlib is making an explicit effort to back up academic research with professional software engineering.  Many academic research projects are supported by financial grants and gifts from companies.  In MADlib, the corporate donation consists of significant work hours from professional software engineers.  This leverages a strength of industry that cannot be replicated on a university
 campus.  Companies can hire high-quality, experienced software
 engineers with the attraction of well-compensated, long-term career
 paths.  Equally important, software shops can offer an entire software
-engineering pipeline that cannot be replicated on a university campus:
+engineering pipeline that cannot be replicated on campus:
 this includes QA processes encompassing specialized QA engineers as
 well as software testing procedures and hardware platforms for
 automated testing at scale.  The hope is that the corporate staffing of research projects like MADlib can both enable
@@ -339,20 +343,20 @@ to validate MADlib as a research vehicle, by fostering a small number of  univer
 With the recent MADlib release completed, there is room for growth in multiple
 dimensions.  The library infrastructure itself is still in beta, and
 has room to mature.  There is room for enhancements in its core
-treatment of mathematical kernels (e.g. linear algebra over both
+treatment of mathematical kernels (e.g.\ linear algebra over both
 sparse and dense matrices) especially in out-of-core settings.  And of
 course there will always be an appetite for additional statistical models and
 algorithmic methods, both textbook techniques and cutting-edge research.  Finally,
 there is nascent interest on the MADlib newsgroup in ports to other DBMSs. Porting MADlib across DBMSs is a
 mechanical but non-trivial software development effort that will
-span the infrastructure (e.g. the need for a cross-platform
+span the infrastructure (e.g.\ the need for a cross-platform
 installer), the methods themselves (particularly the user-defined
-functions) and the software engineering infrastructure (e.g. the need
+functions) and the software engineering infrastructure (e.g.\ the need
 for QA support on additional database engines).
 
 \section{MADlib Architecture}
 \label{sec:gen}
-The core of traditional SQL---\texttt{SELECT... FROM... WHERE... GROUP BY}---is
+The core of traditional SQL---\texttt{SELECT...} \texttt{FROM...} \texttt{WHERE}... \texttt{GROUP BY}---is
 quite a powerful harness for orchestrating bulk data processing across
 one or many processors and disks.  It is also a portable, native
 language supported by range of widely-deployed open source and
@@ -383,12 +387,12 @@ partitioning of the matrix, and a pattern to process the pieces and
 merge results back together.  This partitioning and dataflow is
 currently outside the scope of a traditional query optimizer or
 database design tool.  But there is a rich literature from scientific
-computing on these issues that can inform in-database implementations~\cite{demmel}.  Once data is properly partitioned, database engines shine at orchestrating the
+computing on these issues~\cite{demmel} that database programmers can use to craft efficient in-database implementations.  Once data is properly partitioned, database engines shine at orchestrating the
 resulting data movement of partitions and the piecewise results of
 computation.
 
 In designing the high-level orchestration of data movement for analytics, we ran across two main
-limitations in standard SQL.  In both cases we solved our problems using driver code written in simple
+limitations in standard SQL which we describe next.  We addressed both limitations using driver code written in simple
 script-based user-defined functions (UDFs), which in turn kick off more
 involved SQL queries.  When implemented correctly, the performance of the scripting language code is not critical, since its logic is invoked only
 occasionally to kick off much larger bulk tasks that are executed by
@@ -407,7 +411,7 @@ problems of data types and casting, but cannot help with the variable
 arity of inputs and outputs.  To address this issue, we use Python
 UDFs to interrogate the database catalog for details of input tables,
 and then synthesize customized SQL queries based on templates to
-produce outputs.  This pattern is currently done in an ad hoc way in
+produce outputs.  {\bf Figure~\ref{fig:secondorder} shows Python code that illustrates this.} This pattern is currently done in an ad hoc way in
 each method that needs it.  In future we plan to support this pattern
 as a Python library that ships with MADlib.
 
@@ -465,7 +469,7 @@ captures the semantics of the linear algebra at the level of matrices
 and arrays.  We provide a C++ abstraction layer in MADlib for this
 type of code.  
 
-\textbf{Example: Linear Regression Background}
+\subsection{Example: Linear Regression Background}
 
 \begin{itemize}
     \item We assume that the dependent variable $y_i$ is a linear function of a vector of independent variables $x_i$, plus some noise.
@@ -652,7 +656,7 @@ that allows a developer to specify a smaller amount of code, which we
 hope will lower the development time to add new techniques. We discuss
 the challenge that we faced implementing this abstraction, and our
 planned future directions to address these challenges. To demonstrate
-our ideas, we have implemented all of the models shown in Table 1
+our ideas, we have implemented all of the models shown in Table~\ref{tab:uwmethods}
 within a single abstraction (built within MADlib) that we describe
 below.  
 
@@ -664,16 +668,16 @@ last few decades~\cite{Rockafellar1996Convex,boyd:cvx} that allows one to perfor
 decoupling. More precisely, in convex optimization, we minimize a
 convex function over a convex set.  The archetype convex function is
 $f(x) = x^2$ and is shown in Figure~\ref{fig:xsquare}. Like all convex
-functions, any local minimum of f is a global minimum f. However, many
+functions, any local minimum of $f$ is a global minimum of $f$. Many
 different popular statistical models are defined by convex
 optimization problems, e.g., linear regression, support vector
 machines, logistic regression, conditional random fields. 
 
 In Oracle's Data Mining toolkit (Oracle DM), four of the ten
 data-mining models are defined by convex problems.  While not every
-data analysis problem is convex, notably the a priori algorithm or
-graph mining algorithms, we argue that convex problems form an
-interesting and important class of models. Table 1 lists the models
+data analysis problem is convex---notably the a priori algorithm or
+graph mining algorithms---we argue that convex problems form an
+interesting and important class of models. Table~\ref{tab:uwmethods} lists the models
 that we have implemented in the MADlib Framework, all of which are
 convex.  
 
@@ -685,20 +689,18 @@ convex sets: bowl shaped. To minimize the function, we just need to
 get to the bottom of the bowl. As a result, even greedy schemes that
 decrease the function at each step will converge to an optimal
 solution.  One such popular greedy method is called a gradient
-method. The idea is to find the steepest descent direction. In 1d,
+method. The idea is to find the steepest descent direction. In 1-d,
 this direction is the opposite direction of the derivative; in higher
-dimensions, it's called the gradient of f and is denoted $\nabla_x
+dimensions, it's called the gradient of $f$ and is denoted $\nabla_x
 f$~\cite{boyd:cvx}. Using the gradient, we iteratively move toward a
 solution. This process can be described by the following C-like
 syntax:
 \[ x+=-\alpha*G(x) \]
 \noindent
-where $G(x)$ is the gradient of $f(x)$ and alpha is a positive number
-called the stepsize that goes to zero with more iteration, e.g.,
-setting alpha=1/k where k is the number of iterations would
-suffice. In the $f(x) = x^2$ example, the gradient is the derivative,
+where $G(x)$ is the gradient of $f(x)$ and $\alpha$ is a positive number
+called the \textit{stepsize} that goes to zero with more iteration.  For example, it suffices to set $\alpha=1/k$ where $k$ is the number of iterations. In the $f(x) = x^2$ example, the gradient is the derivative,
 $G(x) = 2x$. Since $x=0$ is the minimum value, we have that for $x >
-0$, $G(x) < 0$ while for $x > 0$ we have that $G(x) > 0$.  For a
+0$, $G(x) < 0$ while for $x < 0$ we have that $G(x) > 0$.  For a
 convex function, the gradient always tells us which direction to go to
 find a minimum value, and the process described above is guaranteed to
 converge at a known rate. One can provide a provable (rapid) rate of
@@ -717,43 +719,42 @@ $f$~\cite[pg.~38]{boyd:cvx}. Notice that all problems in Table 1 are
 of this form: intuitively each of these models is finding some model
 (i.e., a vector $w$) that is scored on many different training
 examples. IGD leverages the above form to construct a rough estimate
-of the gradient of f using the gradient of a single term: for example,
+of the gradient of $f$ using the gradient of a single term: for example,
 the estimate if we select $i$ is the gradient of $f_i$ (that we denote
-$G_i(x)$. The resulting algorithm is the described as:
+$G_i(x)$). The resulting algorithm is the described as:
 \[  x += - \alpha N * G_i(x)   \]
- 
 This approximation is guaranteed to converge an optimal solution. 
 
  
 In MADlib, each tuple in the table can be thought of as encoding a
-single $f_i$ and so the expression in Eq. 1 can be implemented like a
-SQL AVG. It is simply an expression over each tuple (to compute Gi(x))
+single $f_i$ and so the expression in Eq. 1 {\bf CHRIS: WHICH IS EQ 1?} can be implemented via a simple user-defined aggregate similar to 
+SQL's AVERAGE. It is simply an expression over each tuple (to compute $G_i(x)$)
 which is then averaged together. Instead of averaging a single number,
-we average a vector of numbers.  Averaging is more than a metaphor,
+we average a vector of numbers.  Averaging is more than a metaphor:
 recently a model-averaging technique where one runs multiple models in
 parallel and averages the resulting vectors component-wise is shown to
-improve convergence rate~\cite{Zinkevich10}.
+improve convergence rates~\cite{Zinkevich10}.
 
 The model averaging is the final ingredient to implement the entire
 IGD algorithm as a standard user-defined aggregation function: the
 model vector is the state of the aggregate, the transition function
-(or sfunc in PostgreSQL terms) is the gradient step, and the final
+(or \texttt{sfunc}, in PostgreSQL terms) is the gradient step, and the final
 merge step is to simply average the models. There are important
-technical consequences of this observation: (1) we automatically
+technical consequences of this observation. First, we automatically
 leverage decades of database know-how in aggregation processing for
-scalability (e.g., parallelism). (2) We get many data analysis tools
+scalability (e.g., parallelism).  Second, we get many data analysis tools
 almost for free: once we constructed the generic infrastructure, we
-were able to add in implementations of the above models very
-quickly. In particular, all models in Table 1.
+were able to add in implementations of all the models in Table~\ref{tab:uwmethods} very
+quickly.
 
 
 IGD is one of a spectrum of gradient methods that differ in how they
 approximate they gradient term above: at one extreme is a IGD where we
 approximate the gradient using a single term, at the other extreme are
 traditional batch-gradient or conjugate gradient where one computes
-the full gradient exactly. In between, there are methods called {\em
+the full gradient exactly (conjugate gradiant is provided by MADlib as well). In between, there are methods called {\em
   mini-batches} that produce an estimate of the gradient using several
-terms instead either a single term. It is an interesting question to
+terms instead {\bf CHRIS: RESOLVE TYPO?} either a single term. It is an interesting question to
 understand these performance trade-offs in more detail for in-database
 analytics.
 
@@ -761,10 +762,10 @@ analytics.
 That said, our initial experiments show that our IGD based approach
 acheives higher performance than prior data mining tools for some
 datasets. For example, on the benchmark Forest dataset, our Logistic
-Regression implementation is up to 4.6x faster than the original
+Regression implementation is up to $4.6\times$ faster than the original
 implementation in MADlib for runtime until 1\% convergence on a
 single-node multicore machine. Similarly, our SVM implementation is up
-to 5.8x faster.
+to $5.8\times$ faster than the original MADlib implementation.
 
 \begin{figure}
 \centering
@@ -788,6 +789,7 @@ Recommendation & $\sum_{(i,j)\in\Omega} (L_i^T R_j - M_{ij})^2 + \mu\|L,R\|_F^2$
 Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) - \log Z(z_k) \right]$ \\
 
 \hline
+\label{tab:uwmethods}
 \end{tabular}}
 %\end{array}
 \caption{Models currently Implemented in MADlib using the IGD-based approach UPDATE\scriptsize In classification, we minimize the error of a
@@ -831,9 +833,10 @@ Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) 
 
 \end{enumerate}
 
-\subsection{Florida Contributions: Sophisticated Text Analytics}
+\subsection{Florida Contributions: Statistical Text Analytics}
 
-Importance of statistical text analysis In many domains, structured
+%Importance of statistical text analysis 
+In many domains, structured
 data and unstructured text are both important assets for data
 analysis. The increasing use of text analysis in enterprise
 applications has increased the expectation of customers and the
@@ -869,8 +872,10 @@ including POS, NER and ER. We implemented four different statistical
 text analysis methods in MADLib, including text feature extraction,
 Viterbi inference, Markov-chain Monte Carlo inference, and
 approximate string matching. These statistical methods can be used
-to perform different text analysis tasks as shown in Table~\ref{}.
+to perform different text analysis tasks as shown in Table~\ref{tab:uflmethods}.  We proceed to discuss them in turn:
 
+\begin{table}
+  \centering
 \begin{tabular}{|c|c|c|c|}
   \hline
   % after \\: \hline or \cline{col1-col2} \cline{col3-col4} ...
@@ -881,28 +886,29 @@ to perform different text analysis tasks as shown in Table~\ref{}.
   Approximate String Matching &  &  & $\checkmark$ \\
   \hline
 \end{tabular}
+\label{tab:uflmethods}
+\caption{Statistical Text Analysis Methods}
+\end{table}
 
 %% \dzw{Add query-driven text analysis? -- Motivation for query-driven
 %% text analysis techniques for IE and ER. Compare to tasks that does
 %% not need to be real-time query-driven (e.g., POS, feature
 %% extraction).}
 
-\textbf{Statistical Text Analysis Methods}
-
 \textbf{Text Feature Extraction:} Text feature extraction is a step
 in most statistical text analysis methods and it is an expensive
 operation. There can be hundreds of features given a token. The main
 feature types include: (1) dictionary features: whether the token
 exists in each of the dictionaries; (2) regex features: whether the
-token string match of the regular expressions; (3) edge features:
+token string matches various regular expressions; (3) edge features:
 whether the label of the token is correlated with the label of the
 previous token; (4) word features: whether the token appeared in the
 training data; (5) unknown features: whether the token is unknown
 from the training data; (5) start/end features: whether the token is
 the first or last in the token sequence.
 
-\textbf{Viterbi Inference:} The top-k inference is the most
-frequently used statistical over the CRF model. Top-k inference
+\textbf{Viterbi Inference:} \textit{Top-k} inference is the most
+frequently used statistical method over the CRF model. Top-k inference
 determines the label sequence with the top-k highest probabilities
 given a token sequence %\tokenseq from a \tf \str.
 
@@ -924,30 +930,30 @@ V(i,y) = \left\{\begin{array}{lll}
 a class of randomized algorithms for estimating intractable
 probability distributions over large state spaces by constructing a
 Markov chain sampling process that converges to the desired
-distribution. We implemented two MCMC methods in database: Gibbs
+distribution. We implemented two MCMC methods in MADLib: Gibbs
 sampling and Metropolis-Hastings (MCMC-MH). The iterative Gibbs
 sampling algorithm is shown in Figure~\ref{Algo:Gibbs}.
 
 \begin{figure}
 \hrulefill\\
-%% {\small
-%% \begin{algo}{Gibbs}{N}
-%%     w_0 \: \CALL{Init}(); w \: w_0; |  // initialize|
-%%     \FOR{idx = 1,...,N}
-%%         i \: idx \% n; |  // propose variable to sample next|
-%%         w' \sim \pi (w_{i}\mid w_{-i}) |  // generate sample|
-%%         \RETURN{| | next | | w'} |  // return a new sample|
-%%         w \: w'; |  // update current world|
-%%     \ENDFOR
-%% \end{algo}}
+{\small
+\begin{algo}{Gibbs}{N}
+    w_0 \: \CALL{Init}(); w \: w_0; |  // initialize|
+    \FOR{idx = 1,...,N}
+        i \: idx \% n; |  // propose variable to sample next|
+        w' \sim \pi (w_{i}\mid w_{-i}) |  // generate sample|
+        \RETURN{| | next | | w'} |  // return a new sample|
+        w \: w'; |  // update current world|
+    \ENDFOR
+\end{algo}}
 \hrulefill\\
 \caption{Pseudo-code for MCMC Gibbs sampling algorithm over a model
 with $n$ variables.}  \label{Algo:Gibbs}
 \end{figure}
 
 \textbf{Approximate String Matching:} The approximate string
-matching technique we use is based on qgrams~\cite{}. Qgrams also
-known as character ngrams can be implemented efficiently inside of a
+matching technique we use is based on qgrams~\cite{}. Qgrams---also
+known as character ngrams---can be implemented efficiently inside of a
 relational database. This technique as an approximate string match
 was first introduced in the SQouT project~\cite{}. We used the
 trigram module in PostgreSQL to create and index 3-grams over text.
@@ -966,10 +972,10 @@ strings we can compare the overlap of two sets of corresponding
 
 % main results, lessons, surprises
 Statistical methods can be implemented in a relational database
-efficiently. Previous work show comparable performance between the
+efficiently. Prior work~\cite{} shows comparable performance between
 in-database SQL and off-the-shelf implementations. Real-time
-query-driven text analysis can be supported using indexes over large
-document corpus, which can be orders-of-magnitude faster than
+query-driven text analysis can be supported using indexes over a large
+document corpus, which can be orders-of-magnitude faster than an
 off-line batch process.
 
 % facilities for text analysis in PostgreSQL
@@ -977,10 +983,10 @@ In the process of developing statistical methods for text analysis,
 we applied and rediscovered the many PostgreSQL features for text
 analysis. In addition to inverted index, user defined functions, and
 user defined aggregates, we used array data types for model
-parameters, trigram index for approximate string matching, and
+parameters, trigram indexes for approximate string matching, and
 recursive queries and window functions for passing states between
 iterations. Also, existing modules in MADLib, such as Naive Bayes
-and Sparse/Dense Matrix manipulations, can also be very useful as
+and Sparse/Dense Matrix manipulations, can be very useful as
 building blocks to implement statistical text analysis methods.
 
 \textbf{Query-Driven Techniques}
