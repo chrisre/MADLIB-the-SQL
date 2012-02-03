@@ -744,14 +744,14 @@ rates over a serial approach~\cite{Zinkevich10}.
 The model averaging is the final ingredient to implement the entire
 IGD algorithm as a standard user-defined aggregation function: the
 model vector is the state of the aggregate, the transition function
-(or \texttt{sfunc}, in PostgreSQL terms) is the gradient step, and the final
-merge step is to simply average the models. There are important
+(or \texttt{sfunc}, in PostgreSQL terms) is the gradient step, and the
+final merge step is to simply average the models. There are important
 technical consequences of this observation. First, we automatically
 leverage decades of database know-how in aggregation processing for
-scalability (e.g., parallelism).  Second, we get many data analysis tools
-almost for free: once we constructed the generic infrastructure, we
-were able to add in implementations of all the models in Table~\ref{tab:uwmethods} very
-quickly.
+scalability (e.g., parallelism).  Second, we get many data analysis
+tools almost for free: once we constructed the generic infrastructure,
+we were able to add in implementations of all the models in
+Figure~\ref{fig:objs:grads} in a matter of days.
 
 
 IGD is one of a spectrum of gradient methods that differ in how they
