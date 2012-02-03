@@ -691,26 +691,28 @@ decrease the function at each step will converge to an optimal
 solution.  One such popular greedy method is called a gradient
 method. The idea is to find the steepest descent direction. In 1-d,
 this direction is the opposite direction of the derivative; in higher
-dimensions, it's called the gradient of $f$ and is denoted $\nabla_x
-f$~\cite{boyd:cvx}. Using the gradient, we iteratively move toward a
-solution. This process can be described by the following C-like
-syntax:
-\[ x+=-\alpha*G(x) \]
+dimensions, it's called the gradient of $f$.\footnote{One standard
+  notation for the gradient is $\nabla_x f$~\cite{boyd:cvx}.}. Using the gradient, we iteratively
+move toward a solution. This process can be described by the following
+C-like syntax:
+\[ x += - \alpha*G(x) \]
 \noindent
-where $G(x)$ is the gradient of $f(x)$ and $\alpha$ is a positive number
-called the \textit{stepsize} that goes to zero with more iteration.  For example, it suffices to set $\alpha=1/k$ where $k$ is the number of iterations. In the $f(x) = x^2$ example, the gradient is the derivative,
-$G(x) = 2x$. Since $x=0$ is the minimum value, we have that for $x >
-0$, $G(x) < 0$ while for $x < 0$ we have that $G(x) > 0$.  For a
-convex function, the gradient always tells us which direction to go to
-find a minimum value, and the process described above is guaranteed to
-converge at a known rate. One can provide a provable (rapid) rate of
-convergence to the minimum value, which is in sharp contrast to a
-typical greedy search.  In our prototype implementation in MADlib, we
-picked up one such simple greedy algorithm, called incremental
-gradient descent (IGD)~\cite{RobbinsMonro51,BertsekasNLP}, that goes
-back to the 1960s. IGD is a refinement of gradient methods that is
-useful when the convex function we are considering, $f(x)$, has the
-following form:
+where $G(x)$ is the gradient of $f(x)$ and $\alpha$ is a positive
+number called the \textit{stepsize} that goes to zero with more
+iterations.  For example, it suffices to set $\alpha=1/k$ where $k$ is
+the number of iterations. In the $f(x) = x^2$ example, the gradient is
+the derivative, $G(x) = 2x$. Since $x=0$ is the minimum value, we have
+that for $x > 0$, $G(x) < 0$ while for $x < 0$ we have that $G(x) >
+0$.  For a convex function, the gradient always tells us which
+direction to go to find a minimum value, and the process described
+above is guaranteed to converge at a known rate. One can provide a
+provable (rapid) rate of convergence to the minimum value, which is in
+sharp contrast to a typical greedy search.  In our prototype
+implementation in MADlib, we picked up one such simple greedy
+algorithm, called incremental gradient descent
+(IGD)~\cite{RobbinsMonro51,BertsekasNLP}, that goes back to the
+1960s. IGD is a refinement of gradient methods that is useful when the
+convex function we are considering, $f(x)$, has the following form:
  
 \[ f(x)= \sum_{i=1}^N f_i (x) \]
 
@@ -722,18 +724,22 @@ examples. IGD leverages the above form to construct a rough estimate
 of the gradient of $f$ using the gradient of a single term: for example,
 the estimate if we select $i$ is the gradient of $f_i$ (that we denote
 $G_i(x)$). The resulting algorithm is the described as:
-\[  x += - \alpha N * G_i(x)   \]
+\begin{equation}
+x += - \alpha N * G_i(x)   
+\label{eq:incremental}\end{equation}
 This approximation is guaranteed to converge an optimal solution. 
 
  
 In MADlib, each tuple in the table can be thought of as encoding a
-single $f_i$ and so the expression in Eq. 1 {\bf CHRIS: WHICH IS EQ 1?} can be implemented via a simple user-defined aggregate similar to 
-SQL's AVERAGE. It is simply an expression over each tuple (to compute $G_i(x)$)
-which is then averaged together. Instead of averaging a single number,
-we average a vector of numbers.  Averaging is more than a metaphor:
-recently a model-averaging technique where one runs multiple models in
-parallel and averages the resulting vectors component-wise is shown to
-improve convergence rates~\cite{Zinkevich10}.
+single $f_i$ and so the expression in Eq.~\ref{eq:incremental} can be
+implemented via a simple user-defined aggregate similar to SQL's
+AVERAGE. It is simply an expression over each tuple (to compute
+$G_i(x)$) which is then averaged together. Instead of averaging a
+single number, we average a vector of numbers.  Averaging is more than
+a metaphor: recently a model-averaging technique where one runs
+multiple models in parallel and averages the resulting vectors
+component-wise is shown to improve convergence
+rates over a serial approach~\cite{Zinkevich10}.
 
 The model averaging is the final ingredient to implement the entire
 IGD algorithm as a standard user-defined aggregation function: the
@@ -749,14 +755,16 @@ quickly.
 
 
 IGD is one of a spectrum of gradient methods that differ in how they
-approximate they gradient term above: at one extreme is a IGD where we
+approximate they gradient term above: at one extreme is IGD where we
 approximate the gradient using a single term, at the other extreme are
-traditional batch-gradient or conjugate gradient where one computes
-the full gradient exactly (conjugate gradiant is provided by MADlib as well). In between, there are methods called {\em
-  mini-batches} that produce an estimate of the gradient using several
-terms instead {\bf CHRIS: RESOLVE TYPO?} either a single term. It is an interesting question to
-understand these performance trade-offs in more detail for in-database
-analytics.
+traditional batch gradient or conjugate gradient where one computes
+the full gradient exactly (conjugate gradiant is provided by MADlib as
+well). In between, there are methods called {\em mini-batches} that
+estimate the gradient using several terms of the function (in contrast
+to both incremental gradient, which uses a single term, and batch
+gradient that uses all the terms in the function to compute the true
+gradient.). It is an interesting question to understand these
+performance trade-offs in more detail for in-database analytics.
 
 
 That said, our initial experiments show that our IGD based approach
@@ -771,37 +779,43 @@ to $5.8\times$ faster than the original MADlib implementation.
 \centering
 \includegraphics[width=3in]{FIGS/x_square}
 \caption{The Archetypical Convex Function $f(x) = x^2$.}
-\label{fig:}
+\label{fig:xsquare}
 \end{figure}
 
 \begin{figure}
 \centering
 {\small
-\begin{tabular}[t]{|l||c|}
+\begin{tabular}[t]{|l||l|}
 \hline
 Application & Objective \\
 \hline
 \hline
-Least Squares & $\sum_{(x,y) \in \Omega} (w^Tx_i - y)^2$\\
-Logisitic Regression & $\sum_{(x,y) \in \Omega} \log(1 + \exp( - y w^tx )$\\
-Classification (SVM)& $\sum_{(x,y) \in \Omega} (1 - yw^{T}x)_{+} + \mu\|\vec{w}\|_1$\\
+Least Squares & $\sum_{(u,y) \in \Omega} (x^Tu - y)^2$\\
+Lasso~\cite{Tibshirani94regressionshrinkage} & $\sum_{(u,y) \in \Omega} (x^Tu - y)^2 + \mu  \|x\|_1$\\
+Logisitic Regression & $\sum_{(u,y) \in \Omega} \log(1 + \exp( - y x^tu )$\\
+Classification (SVM)& $\sum_{(u,y) \in \Omega} (1 - yx^{T}u)_{+}$\\
+\hline
 Recommendation & $\sum_{(i,j)\in\Omega} (L_i^T R_j - M_{ij})^2 + \mu\|L,R\|_F^2$\\
 Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) - \log Z(z_k) \right]$ \\
-
 \hline
-\label{tab:uwmethods}
 \end{tabular}}
-%\end{array}
-\caption{Models currently Implemented in MADlib using the IGD-based approach UPDATE\scriptsize In classification, we minimize the error of a
-  predictor plus a regularization term.  In recommendation, we find a
-  low-rank approximation to a matrix $M$ which is only observed on a
-  sparse sampling of its entries.  The low-rank matrix is regularized
-  by the sums of the squares of its factors.  In Labeling with
-  Conditional Random fields, we maximize the weights associated with
-  features $(F_j)$ in the text predict the labels. In Kalman filters,
-  we fit noisy time series data.  In quantitative finance, portfolios
-  are optimized balancing risk ($p^Tx$) with expected returns
-  ($x^T\Sigma x$); the allocations must lie in a simplex, $\Delta$.  }
+\caption{Models currently Implemented in MADlib using the IGD-based
+  approach\scriptsize In classification and regression methods, given
+  a dataset $\Omega \subseteq \mathbb{R}^{N} \times \mathbb{R}$, we
+  minimize the error of a predictor $x \in \mathbb{R}^N$ on a
+  dataset. Given $(u,v) \in \Omega$, the methods above predict the
+  value of $y$ by the equation $x^Tu$. One can add a regularization
+  term to any regression or classification model, e.g., to combat
+  overfitting. For example, in Lasso, we minimize the square loss
+  against the data subject to an $\ell_1$ regularization.  In
+  recommendation, given a matrix $M \in \mathbb{R}^{n \times m}$
+  observed on a set of entries $\Omega \subseteq [n] \times [m]$, we
+  fit a so called low-rank approximation, i.e., $L \in \mathbb{R}^{n
+    \times k}$ and $R \in \mathbb{R}^{m \times k}$ for $k \ll
+  \min\{m,n\}$ .  The low-rank matrix is regularized by the sums of the
+  squares of its factors.  In Labeling with Conditional Random fields,
+  we maximize the weights associated with features $(F_j)$ in the text
+  predict the labels }
 \label{fig:objs:grads}
 \end{figure}
 

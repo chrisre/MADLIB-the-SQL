@@ -15,6 +15,18 @@ H.~Robbins and S.~Monro.
 \newblock A stochastic approximation method.
 \newblock {\em Ann. Math. Statistics}, 22, 1951.
 
+\bibitem{Rockafellar1996Convex}
+R.~T. Rockafellar.
+\newblock {\em Convex Analysis (Princeton Landmarks in Mathematics and
+  Physics)}.
+\newblock {Princeton University Press}, 1996.
+
+\bibitem{Tibshirani94regressionshrinkage}
+R.~Tibshirani.
+\newblock Regression shrinkage and selection via the lasso.
+\newblock {\em Journal of the Royal Statistical Society, Series B},
+  58:267--288, 1994.
+
 \bibitem{wallach:crf}
 H.~M. Wallach.
 \newblock Conditional random fields: An introduction.

@@ -1,48 +1,61 @@
-This is BibTeX, Version 0.99c (Web2C 7.5.4)
+This is BibTeX, Version 0.99d (TeX Live 2011/MacPorts 2011_1)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: madlib_the_sql.aux
+Case mismatch error between cite keys MADSkills and madskills
+---line 17 of file madlib_the_sql.aux
+ : \citation{MADSkills
+ :                    }
+I'm skipping whatever remains of this command
 The style file: abbrv.bst
 Database file #1: chris.local.wopages.bib
+Warning--I didn't find a database entry for "madskills"
+Warning--I didn't find a database entry for "cran"
+Warning--I didn't find a database entry for "mlformr"
+Warning--I didn't find a database entry for "mahout"
+Warning--I didn't find a database entry for "demmel"
+Warning--I didn't find a database entry for "Daisy11"
+Warning--I didn't find a database entry for "Daisy10"
 Warning--I didn't find a database entry for "crftutorial"
 Warning--I didn't find a database entry for "viterbi"
-You've used 5 entries,
+You've used 7 entries,
             2118 wiz_defined-function locations,
-            530 strings with 4307 characters,
-and the built_in function-call counts, 1278 in all, are:
-= -- 117
-> -- 63
+            554 strings with 4727 characters,
+and the built_in function-call counts, 1785 in all, are:
+= -- 168
+> -- 77
 < -- 0
-+ -- 26
-- -- 20
-* -- 68
-:= -- 237
-add.period$ -- 15
-call.type$ -- 5
-change.case$ -- 25
++ -- 32
+- -- 24
+* -- 95
+:= -- 324
+add.period$ -- 21
+call.type$ -- 7
+change.case$ -- 32
 chr.to.int$ -- 0
-cite$ -- 5
-duplicate$ -- 56
-empty$ -- 105
-format.name$ -- 20
-if$ -- 261
+cite$ -- 7
+duplicate$ -- 79
+empty$ -- 153
+format.name$ -- 24
+if$ -- 367
 int.to.chr$ -- 0
-int.to.str$ -- 5
-missing$ -- 6
-newline$ -- 28
-num.names$ -- 10
-pop$ -- 31
+int.to.str$ -- 7
+missing$ -- 9
+newline$ -- 38
+num.names$ -- 14
+pop$ -- 41
 preamble$ -- 1
-purify$ -- 20
+purify$ -- 26
 quote$ -- 0
-skip$ -- 34
+skip$ -- 47
 stack$ -- 0
-substring$ -- 26
-swap$ -- 5
+substring$ -- 61
+swap$ -- 7
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 16
+type$ -- 22
 warning$ -- 0
-while$ -- 10
-width$ -- 6
-write$ -- 57
-(There were 2 warnings)
+while$ -- 16
+width$ -- 8
+write$ -- 78
+(There was 1 error message)
