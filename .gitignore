@@ -1,0 +1,14 @@
+# Meta data of Mac OS X's Finder.app
+.DS_Store
+
+# LaTeX temporary files
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+# Don't include generated files
+/madlib_the_sql.pdf
