@@ -11,6 +11,51 @@
 \usepackage{alltt,algo}
 \usepackage{url}
 
+\makeatletter
+% The vldb style file is an anachronsism. So no need to worry about hacks anyway.
+% We redefined the listing environment by package minted here. (If we did not,
+% we would also get an error because \aboveparskip is undefined.)
+% Copied from vldb.csl
+\@ifundefined{code}{\newcounter {code}} % this is for LaTeX2e
+
+\def\fps@code{tbp}
+\def\ftype@code{1}
+\def\ext@code{lof}
+\def\fnum@code{Listing \thecode}
+\def\code{\@float{code}}
+\let\endcode\end@float
+\@namedef{code*}{\@dblfloat{code}}
+\@namedef{endcode*}{\end@dblfloat}
+\makeatother
+
+\usepackage{minted}
+
+% BEGIN Convenience commands
+	\newcommand{\todo}[1]{\textbf{\color{red}#1}}
+
+	% BEGIN Listing environments
+	\newminted{cpp}{mathescape,
+					linenos,
+					numbersep=5pt,
+					fontsize=\scriptsize,
+					framesep=2mm}
+	\newminted{python}{mathescape,
+					  linenos,
+					  numbersep=5pt,
+					  fontsize=\scriptsize,
+					  framesep=2mm}
+	% END Listing environments
+% END Convenience commands
+
+% BEGIN Mathematical Definitions
+	% BEGIN Set Symbols
+		\newcommand{\setsymbol}[1]{\mathbb{#1}}
+		\newcommand{\N}{\@ifstar{\setsymbol{N}_0}{\setsymbol{N}}}
+		\newcommand{\R}{\setsymbol{R}}
+	% END Set Symbols
+	\renewcommand{\vec}[1]{\ensuremath{\boldsymbol{#1}}}
+% END Mathematical Definitions
+
 \begin{document}
 
 % ****************** TITLE ****************************************
@@ -469,35 +514,155 @@ captures the semantics of the linear algebra at the level of matrices
 and arrays.  We provide a C++ abstraction layer in MADlib for this
 type of code.  
 
-\subsection{Example: Linear Regression Background}
+\subsection{Example: Single-Pass Algorithms}
 
+\subsubsection{Ordinary Least Squares}
+
+In ordinary-least-squares (OLS) linear regression the goal is to fit a hyperplane to a set of points, with the objective of minimizing the sum of squared residuals. Formally, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \R$, and our goal is to find the vector $\widehat{\vec b}$ that minimizes $\sum_{i=1}^n (y_i - \langle \widehat{\vec b}, \vec x_i \rangle)^2$. OLS is one of the most fundamental methods in statistics: Typically, each $y_i$ is assumed to be an (independent) noisy measurement of $\langle \vec b, \vec x_i \rangle$, where $\vec b$ is an unknown but fixed vector and the noise is uncorrelated with mean 0 and unknown but fixed variance. Under these assumptions, $\widehat{\vec b}$ is the best linear unbiased estimate of~$\vec b$ (Gauss-Markov). Under additional assumptions (normality, independence), $\widehat{\vec b}$ is also the maximum-likelihood estimate. Letting $X$ denote the matrix whose rows are $\vec x_i^T$, and defining $\vec y := (y_1, \dots, y_n)^T$, it is well-known that the sum of squared residuals is minimized by $\widehat{\vec b} = (X^TX)^{-1}X^T \vec y$ (for simplicity, we only consider the full-rank case here).
+
+It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations \cite{DBLP:conf/nips/ChuKLYBNO06}. In the following, we take OLS linear-regression as an example for discussing MADlib's internal implementation in detail. The principal observation is this: Since $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point, we can compute these sums in a single pass over the data. In fact, since summation is associative, data parallelism virtually comes for free: We can compute the per-segment subsums of the previous expressions locally on each segment, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the (pseudo\nobreakdash-)inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
+
+\subsubsection{MADlib Implementation}
+
+The above description directly translates into an implementation through a user-defined aggregate, which (in PostgreSQL/Greenplum terminology) consists of:
+\begin{enumerate}
+	\item A \emph{transition function} that takes the current transition state and a new data point. Its output is the combined transition state. The transition function is equivalent to the ``combining'' function passed to \emph{left-fold} functions in functional-programming languages.
+	\item A \emph{merge function} that takes two transition states and transforms them into a new combined transition state.
+	\item A \emph{final function} that takes a transition state and transforms it into the output value.
+\end{enumerate}
+While the fold-paradigm is natural, and arguably ubiquitous for implementing aggregates (MySQL, PostgreSQL, Map-Reduce, etc.), the SQL standard does not prescribe an extension interface, and user-defined aggregates are entirely vendor-specific. For MADlib, we therefore implemented an abstraction layer that facilitates encapsulating user-defined-function logic from DBMS logic or its APIs. The design was guided by the four requirements correctness, robustness, performance, and maintainability/portability. These requirements manifest in the code as follows---with the following not meant to be exhaustive. See Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final} for reduced, but fully functional, excerpts from the MADlib source code.
 \begin{itemize}
-    \item We assume that the dependent variable $y_i$ is a linear function of a vector of independent variables $x_i$, plus some noise.
-    \item Our data set consists of samples according to this model.
-    \item Estimating coefficients using least-squares regression is known to maximize the likelihood of our sample set (given the model) if the noise terms in each sample are uncorrelated and normally distributed with mean 0 and arbitrary but fixed variance.
-    \item The least-squares estimator is $c=(X^TX)-1X^Ty$, where $y$ is the column vector of the random variates $y_i$ and $X$ is the design matrix having $x_iT$ as rows
+	\item MADlib does not reinvent the wheel but uses proven third-party party libraries for linear-algebra code and other mathematical code. (All requirements)
+	\item MADlib aggregates are written in C or (preferably) C++. Arguments are passed by reference to immutable data structures. (Performance)
+	\item Mutable data structures are provided for cases where data can be safely modified in-place. Should a DBMS not provide mutable values, the abstraction layer creates mutable copies transparently. (Performance)
+	\item By virtue of being a template library, the runtime and abstraction overhead is reduced to a minimum. (Performance)
+	\item The C++ abstraction layer provides a complete encapsulation, and no DBMS-specific API is used. (Maintainability)
+	\item To the greatest extend supported by the DBMS, the abstraction layer catches all type errors and facilitates writing strictly type-safe code. (Robustness)
 \end{itemize}
 
-Implementation
-\begin{itemize}
-    \item As user-define aggregate
+\begin{code}
+	\begin{cppcode*}{gobble=16}
+		AnyType
+		linregr_transition::run(AnyType &args) {
+		    LinRegrTransitionState<
+		        MutableArrayHandle<double> > state = args[0];
+		    double y = args[1].getAs<double>();
+		    HandleMap<const ColumnVector> x
+		        = args[2].getAs<ArrayHandle<double> >();
+		    
+		    if (state.numRows == 0)
+		        state.initialize(*this, x.size());
+		    state.numRows++;
+		    state.y_sum += y;
+		    state.y_square_sum += y * y;
+		    state.X_transp_Y.noalias() += x * y;
+		    triangularView<Lower>(state.X_transp_X)
+		        += x * trans(x);
+		    
+		    return state;
+		}
+	\end{cppcode*}
+	\caption{Linear-regression transition function}
+	\label{fn:lin-reg-trans}
+\end{code}
 
-    \item Idea: Both $X^TX$ and $X^Ty$ can be computed using a standard single-pass aggregate.
-      \begin{enumerate}
-         \item Matrix multiplication can be decomposed into the sum of products of submatrices. Hence, the UDA's merge operation is associative and thus parallelizable at the row level.
-         \item As a final (non-parallelized) step, we compute the pseudo-inverse of $X^TX$ and multiply with $X^Ty$.
-      \end{enumerate}
-    \item Implementation in PostgreSQL or Greenplum:
-      \begin{enumerate}
-         \item User-defined aggregates consist of a \textit{transition function} that combines an accumulation state with with the next row
-         \item Greenplum parallelization relies on also having a `merge function' that combines two accumulation states
-      \end{enumerate}
-     \item Performance
-\begin{itemize}
-          \item Runtime measurements fit the theoretical asymptotical runtime behavior fairly well. Roughly, the relevant terms are
-\[            a * k^3 + (b * n * k^2 + c)/p \]
+\begin{code}
+	\begin{cppcode*}{gobble=16}
+		AnyType
+		linregr_final::run(AnyType &args) {
+		    LinRegrTransitionState<
+		        ArrayHandle<double> > state = args[0];
+		
+		    SymmetricPositiveDefiniteEigenDecomposition<Matrix>
+		        decomposition(state.X_transp_X, EigenvaluesOnly,
+		            ComputePseudoInverse);
+		    
+		    Matrix inverse_of_X_transp_X
+		        = decomposition.pseudoInverse();		
+		    HandleMap<ColumnVector> coef(
+		        allocateArray<double>(state.widthOfX));
+		    coef.noalias() = inverse_of_X_transp_X
+		        * state.X_transp_Y;
+		
+		    AnyType tuple;
+		    tuple << coef << decomposition.conditionNo();
+		    return tuple;
+		}
+	\end{cppcode*}
+	\caption{Linear-regression final function}
+	\label{fn:lin-reg-final}
+\end{code}
 
-            where $k$ is the number of independent variables, $n$ is the number of rows, $p$ is the number of segments, and $a, b,$ and $c$ are constants. In particular: If the quadratic term dominates (\# independent variables $<$ couple hundred), Greenplum has a linear speed-up in the number of segments. On current hardware, computing the pseudo-inverse with the default BLAS is in the order of more than a minute if the number of independent variables reaches one thousand. In that case, the cubic term often dominates.
+Given the user-defined aggregate, running MADlib's linear regression takes a mere SQL statement of form ``\texttt{SELECT madlib.linregr(y, x) FROM data}''.
+
+\subsection{Example: Multi-Pass Algorithms}
+
+\subsubsection{(Binary) Logistic Regression}
+
+In (binary) logistic regression, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \{ 0,1 \}$, and our goal is to find the vector $\widehat{\vec b}$ that maximizes $\prod_{i=1}^n \sigma((-1)^{y_i + 1} \cdot \langle \widehat{\vec b}, \vec x_i \rangle)$. Here, $\sigma(z) = \frac{1}{1+\exp(z)}$ denotes the logistic function. Statistically, this is the maximum-likelihood estimate for an unknown vector $\vec b$ under the assumption that each data point's $y_i$ is a random variate with $\Pr[y_i = 1 \mid \vec x_i] = \sigma( \langle \vec b, \vec x_i \rangle )$ and that all observations are independent.
+
+It is well-known that, in general, no closed-formula expression for $\widehat{\vec b}$ exists. Instead, $\widehat{\vec b}$ can be computed as the solution of a convex program via standard iterative methods. Arguably, the most common method is to maximize the logarithm of the likelihood using Newton's method. In the case of logistic regression this reduces to \emph{iteratively reweighted least squares} with iteration rule $\widehat{\vec \beta}_{m+1} = (X^T D X)^{-1} X^T D \vec z_m$. Here $\vec z_m$ is a transformation of $X$ and $\widehat{\vec \beta}_m$.
+
+\subsubsection{MADlib Implementation}
+
+Obviously, each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop, which we call driver. Unfortunately, the most obvious implementations, via recursive queries or multi-pass user-defined aggregates lack wide-spread support in today's DBMSs.
+
+The only portable option left is thus to drive iterations from within a user-defined function. For portability we chose to implement such driver function in Python. See Listing~\ref{fn:log-reg-driver}. \todo{To be completed.}
+
+\begin{code}
+	\begin{pythoncode*}{gobble=16}
+		return __runIterativeAlg(
+		    stateType = "FLOAT8[]",
+		    initialState = "NULL",
+		    source = source,
+		    updateExpr = """
+		        {MADlibSchema}.logregr_{optimizer}_step(
+		            ({depColumn})::BOOLEAN,
+		            ({indepColumn})::FLOAT8[],
+		            {{state}}
+		        )
+		        """.format(
+		            MADlibSchema = MADlibSchema,
+		            depColumn = depColumn,
+		            indepColumn = indepColumn,
+		            optimizer = optimizer),
+		    terminateExpr = """
+		        {MADlibSchema}.internal_logregr_{optimizer}_step_distance(
+		            {{newState}}, {{oldState}}
+		        ) < {precision}
+		        """.format(
+		            MADlibSchema = MADlibSchema,
+		            optimizer = optimizer,
+		            precision = precision),
+		    maxNumIterations = maxNumIterations)
+	\end{pythoncode*}
+	\caption{Logistic regression driver}
+	\label{fn:log-reg-driver}
+\end{code}
+
+\subsection{Example: Dealing with Large States}
+
+\todo{To be completed.}
+Example k-means:
+\begin{itemize}
+	\item even though the current state is completely captured by the set of centroids, we want to cache distances
+	\item Won't fit into memory
+	\item Need to resort to temporary tables.
+\end{itemize}
+
+\subsection{MADlib Performance}
+
+\todo{To be completed. Might remove comments about the reference BLAS because anybody with HPC background is well aware that this is not a tuned library.}
+Our runtime measurements fit will to the theoretical asymptotical runtime behavior. Roughly, the relevant terms are (as expected)
+\begin{gather*}
+	a \cdot k^3 + \frac 1p \cdot (b \cdot n \cdot k^2 + c)
+\end{gather*}
+where $k$ is the number of independent variables, $n$ is the number of rows, $p$ is the number of segments, and $a$, $b$, and $c$ are constants. \todo{Substantiate. Determine values for $a,b,c$.} In particular: If the quadratic term dominates (the number of independent variables is less than a couple of hundred), Greenplum has a linear speed-up in the number of segments.
+
+On current hardware, computing the pseudo-inverse with libraries such as Eigen, or LAPACK/BLAS is in the order of more than a minute if the number of independent variables reaches one thousand. In that case, the cubic term often dominates.
+
+\begin{itemize}
+
           \item There are no performance differences between PostgreSQL 9.1.1 (both in single and multi-user mode) and GP 4.1 in running the aggregate function on on a single core.
           \item Single-core performance among laptop CPUs (like the Core i5 540M) and server CPUs (like the Xeon X5680 in a DCA) does not differ much. Typically even less than what the difference in clock speeds might suggest.
           \item BLAS implementations are typically far from
@@ -509,14 +674,18 @@ Implementation
 
             \item  Real performance numbers are given in
 \end{itemize}
-      \item Typical User Workflow (needs to be substantiated)
-        \begin{itemize}
-          \item Data loading and cleansing
-          \item Model hypothesis
-          \item  ...
-        \end{itemize}
 
+\subsection{Using MADlib}
+
+Typical User Workflow \todo{(needs to be substantiated)}:
+\begin{itemize}
+	\item Data loading and cleansing
+	\item Example: Dealing with a large number of independent variables. Convenient to use catalog information to generate code that uses MADlib.
+	\item Model hypothesis
+	\item ...
 \end{itemize}
+
+
       \subsection{MADlib Performance}
 \begin{verbatim}
       Linear Regression
