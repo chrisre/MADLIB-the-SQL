@@ -522,6 +522,7 @@ Database engines typically provide efficient parallelism as well as
 buffering and spill files on disk for large temp tables, so this
 pattern is quite efficient in practice.
 
+
 \subsubsection{The Fold / Map-Reduce Paradigm in SQL}
 
 The most important and the most basic building block in the macro-programming of MADlib is the use of user-defined aggregates (UDAs). In general, aggregates---and the related window functions---are the only way in SQL to implement mathematical functions that take as input the values of an arbitrary number of rows (tuples). Unfortunately, the SQL standard does not prescribe an extension interface, and user-defined aggregates are entirely vendor-specific. Yet, the fold (or ``map-reduce'') paradigm is natural and ubiquitous, so that we expect user-defined aggregates to be very portable. In PostgreSQL/Greenplum terminology, a user-defined aggregate consists of up to three user-defined functions:
@@ -533,7 +534,8 @@ The most important and the most basic building block in the macro-programming of
 Clearly, a user-defined aggregate is inherently data-parallel if the combining step in the transition function is associative and the merge function returns the same result as if the transition function was called repeatedly for every individual element in the second state.
 
 
-\subsection{MicroProgramming: Data Representations and Inner Loops}
+\subsection{Micro-Programming: Data Representations and Inner Loops}
+\label{sec:micro}
 
 In addition to doing the coarse-grained orchestration of chunks, the
 database engine must very efficiently invoke the single-node code that
@@ -921,32 +923,27 @@ must be tested and maintained for each data analysis technique. To
 reduce this burden, we have designed an architecture on top of MADlib
 that allows a developer to specify a smaller amount of code, which we
 hope will lower the development time to add new techniques. We discuss
-the challenge that we faced implementing this abstraction, and our
-planned future directions to address these challenges. To demonstrate
-our ideas, we have implemented all of the models shown in Table~\ref{tab:uwmethods}
-within a single abstraction (built within MADlib) that we describe
-below.  
+the challenge that we faced implementing this abstraction. To
+demonstrate our ideas, we have implemented all of the models shown in
+Table~\ref{fig:objs:grads} within a single abstraction (built within
+MADlib) that we describe below.
 
 \paragraph*{The Key Abstraction} An ideal abstraction would allow us to
 decouple the specification of the model from the algorithm used to
 solve the specification. Fortunately, there is a beautiful, powerful
 abstraction called convex optimization that has been developed for the
-last few decades~\cite{Rockafellar1996Convex,boyd:cvx} that allows one to perform this
-decoupling. More precisely, in convex optimization, we minimize a
-convex function over a convex set.  The archetype convex function is
-$f(x) = x^2$ and is shown in Figure~\ref{fig:xsquare}. Like all convex
-functions, any local minimum of $f$ is a global minimum of $f$. Many
-different popular statistical models are defined by convex
-optimization problems, e.g., linear regression, support vector
-machines, logistic regression, conditional random fields. 
-
-In Oracle's Data Mining toolkit (Oracle DM), four of the ten
-data-mining models are defined by convex problems.  While not every
-data analysis problem is convex---notably the a priori algorithm or
-graph mining algorithms---we argue that convex problems form an
-interesting and important class of models. Table~\ref{tab:uwmethods} lists the models
-that we have implemented in the MADlib Framework, all of which are
-convex.  
+last few decades~\cite{Rockafellar1996Convex,boyd:cvx} that allows one
+to perform this decoupling. More precisely, in convex optimization, we
+minimize a convex function over a convex set.  The archetype convex
+function is $f(x) = x^2$ and is shown in
+Figure~\ref{fig:xsquare}. Like all convex functions, any local minimum
+of $f$ is a global minimum of $f$. Many different popular statistical
+models are defined by convex optimization problems, e.g., linear
+regression, support vector machines, logistic regression, conditional
+random fields.  While not every data analysis problem is
+convex---notably the a priori algorithm or graph mining algorithms--
+but many are. Table~\ref{fig:objs:grads} lists models that we have
+implemented in the MADlib Framework, all of which are convex.
 
 In spite of the expressive power of convex optimization, even simple
 algorithms converge at provable rates to the true solution. For
@@ -959,9 +956,9 @@ solution.  One such popular greedy method is called a gradient
 method. The idea is to find the steepest descent direction. In 1-d,
 this direction is the opposite direction of the derivative; in higher
 dimensions, it's called the gradient of $f$.\footnote{One standard
-  notation for the gradient is $\nabla_x f$~\cite{boyd:cvx}.}. Using the gradient, we iteratively
-move toward a solution. This process can be described by the following
-C-like syntax:
+  notation for the gradient is $\nabla_x f$~\cite{boyd:cvx}.} Using
+the gradient, we iteratively move toward a solution. This process can
+be described by the following C-like syntax:
 \[ x += - \alpha*G(x) \]
 \noindent
 where $G(x)$ is the gradient of $f(x)$ and $\alpha$ is a positive
@@ -979,68 +976,84 @@ implementation in MADlib, we picked up one such simple greedy
 algorithm, called incremental gradient descent
 (IGD)~\cite{RobbinsMonro51,BertsekasNLP}, that goes back to the
 1960s. IGD is a refinement of gradient methods that is useful when the
-convex function we are considering, $f(x)$, has the following form:
+convex function we are considering, $f(x)$, has the form:
  
 \[ f(x)= \sum_{i=1}^N f_i (x) \]
 
-It is a standard fact that if each of the $f_i$ is convex, then so is
+If each of the $f_i$ is convex, then so is
 $f$~\cite[pg.~38]{boyd:cvx}. Notice that all problems in Table 1 are
 of this form: intuitively each of these models is finding some model
 (i.e., a vector $w$) that is scored on many different training
 examples. IGD leverages the above form to construct a rough estimate
-of the gradient of $f$ using the gradient of a single term: for example,
-the estimate if we select $i$ is the gradient of $f_i$ (that we denote
-$G_i(x)$). The resulting algorithm is the described as:
+of the gradient of $f$ using the gradient of a single term: for
+example, the estimate if we select $i$ is the gradient of $f_i$ (that
+we denote $G_i(x)$). The resulting algorithm is the described as:
 \begin{equation}
 x += - \alpha N * G_i(x)   
 \label{eq:incremental}\end{equation}
 This approximation is guaranteed to converge an optimal solution. 
 
  
-In MADlib, each tuple in the table can be thought of as encoding a
-single $f_i$ and so the expression in Eq.~\ref{eq:incremental} can be
-implemented via a simple user-defined aggregate similar to SQL's
-AVERAGE. It is simply an expression over each tuple (to compute
-$G_i(x)$) which is then averaged together. Instead of averaging a
-single number, we average a vector of numbers.  Averaging is more than
-a metaphor: recently a model-averaging technique where one runs
-multiple models in parallel and averages the resulting vectors
-component-wise is shown to improve convergence
-rates over a serial approach~\cite{Zinkevich10}.
-
-The model averaging is the final ingredient to implement the entire
-IGD algorithm as a standard user-defined aggregation function: the
-model vector is the state of the aggregate, the transition function
-(or \texttt{sfunc}, in PostgreSQL terms) is the gradient step, and the
-final merge step is to simply average the models. There are important
-technical consequences of this observation. First, we automatically
-leverage decades of database know-how in aggregation processing for
-scalability (e.g., parallelism).  Second, we get many data analysis
-tools almost for free: once we constructed the generic infrastructure,
-we were able to add in implementations of all the models in
+\paragraph*{Using the MADlib framework}
+In our setting, each tuple in the input table for an analysis task
+encodes a single $f_i$. We use the microprogramming inferface of
+Section~\ref{sec:micro} to perform the mapping from the tuples to the
+vector representation that is used in Eq.~\ref{eq:incremental}. Then,
+we observe Eq.~\ref{eq:incremental} is simply an expression over each
+tuple (to compute $G_i(x)$) which is then averaged together. Instead
+of averaging a single number, we average a vector of numbers. Here, we
+use the {\em macro-programming} provided by MADlib to handle all data
+access, spills to disk, parallelize the scans, etc.\footnote{Averaging
+  is more than a metaphor: recently a model-averaging technique where
+  one runs multiple models in parallel and averages the resulting
+  vectors component-wise is shown to improve convergence rates over a
+  serial approach~\cite{Zinkevich10}. Our implementation leverages
+  this observation to allow GP freedom to process the aggregate in
+  whatever way it sees fit.} Finally, the macro programming layer
+helps us test for convergence (which is implemented with either a
+python combination or C driver. Using this approach, we were able to
+add in implementations of all the models in
 Figure~\ref{fig:objs:grads} in a matter of days.
 
-
-IGD is one of a spectrum of gradient methods that differ in how they
-approximate they gradient term above: at one extreme is IGD where we
-approximate the gradient using a single term, at the other extreme are
-traditional batch gradient or conjugate gradient where one computes
-the full gradient exactly (conjugate gradiant is provided by MADlib as
-well). In between, there are methods called {\em mini-batches} that
-estimate the gradient using several terms of the function (in contrast
-to both incremental gradient, which uses a single term, and batch
-gradient that uses all the terms in the function to compute the true
-gradient.). It is an interesting question to understand these
-performance trade-offs in more detail for in-database analytics.
-
-
-That said, our initial experiments show that our IGD based approach
+our initial experiments show that our IGD based approach
 acheives higher performance than prior data mining tools for some
 datasets. For example, on the benchmark Forest dataset, our Logistic
 Regression implementation is up to $4.6\times$ faster than the original
 implementation in MADlib for runtime until 1\% convergence on a
 single-node multicore machine. Similarly, our SVM implementation is up
 to $5.8\times$ faster than the original MADlib implementation.
+
+
+%% The model averaging is the final ingredient to implement the entire
+%% IGD algorithm as a standard user-defined aggregation function: the
+%% model vector is the state of the aggregate, the transition function
+%% (or \texttt{sfunc}, in PostgreSQL terms) is the gradient step, and the
+%% final merge step is to simply average the models. There are important
+%% technical consequences of this observation. First, we automatically
+%% leverage decades of database know-how in aggregation processing for
+%% scalability (e.g., parallelism).  Second, we get many data analysis
+%% tools almost for free: 
+
+%% IGD is one of a spectrum of gradient methods that differ in how they
+%% approximate they gradient term above: at one extreme is IGD where we
+%% approximate the gradient using a single term, at the other extreme are
+%% traditional batch gradient or conjugate gradient where one computes
+%% the full gradient exactly (conjugate gradiant is provided by MADlib as
+%% well). In between, there are methods called {\em mini-batches} that
+%% estimate the gradient using several terms of the function (in contrast
+%% to both incremental gradient, which uses a single term, and batch
+%% gradient that uses all the terms in the function to compute the true
+%% gradient.). It is an interesting question to understand these
+%% performance trade-offs in more detail for in-database analytics.
+
+
+%% That said, our initial experiments show that our IGD based approach
+%% acheives higher performance than prior data mining tools for some
+%% datasets. For example, on the benchmark Forest dataset, our Logistic
+%% Regression implementation is up to $4.6\times$ faster than the original
+%% implementation in MADlib for runtime until 1\% convergence on a
+%% single-node multicore machine. Similarly, our SVM implementation is up
+%% to $5.8\times$ faster than the original MADlib implementation.
 
 \begin{figure}
 \centering
@@ -1086,33 +1099,33 @@ Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) 
 \label{fig:objs:grads}
 \end{figure}
 
-\paragraph*{Future Work and Challenges} We plan to work on three challenges: (1) improving performance, (2) an infrastructure to make tools in MADlib statistically robust, and (3) SAS-style Model Management. 
-\begin{enumerate}
-\item \textbf{Improving Performance}. IGDs are not a panacea. They
-  have suboptimal runtime performance if extremely high precision is
-  required. We plan to add in more both mathematical and systems-level
-  optimization methods, which can be done transparently leveraging the
-  decoupling provided by convex analysis.
+%% \paragraph*{Future Work and Challenges} We plan to work on three challenges: (1) improving performance, (2) an infrastructure to make tools in MADlib statistically robust, and (3) SAS-style Model Management. 
+%% \begin{enumerate}
+%% \item \textbf{Improving Performance}. IGDs are not a panacea. They
+%%   have suboptimal runtime performance if extremely high precision is
+%%   required. We plan to add in more both mathematical and systems-level
+%%   optimization methods, which can be done transparently leveraging the
+%%   decoupling provided by convex analysis.
 
-\item \textbf{Increasing Robustness}. In its current version, MADlib
-  encodes parameters of the algorithms (sometimes called
-  hyperparameters) in the code itself. Some statistical techniques
-  like regularization (a common technique to prevent overfitting or
-  deal with poorly conditioned data) require that a user tune a
-  parameter on their data. We would like to be able to expose such
-  parameters in a generic way and then provide automated tuning
-  techniques. In turn, our hope is to increase the robustness of these
-  statistical tools automatically.
+%% \item \textbf{Increasing Robustness}. In its current version, MADlib
+%%   encodes parameters of the algorithms (sometimes called
+%%   hyperparameters) in the code itself. Some statistical techniques
+%%   like regularization (a common technique to prevent overfitting or
+%%   deal with poorly conditioned data) require that a user tune a
+%%   parameter on their data. We would like to be able to expose such
+%%   parameters in a generic way and then provide automated tuning
+%%   techniques. In turn, our hope is to increase the robustness of these
+%%   statistical tools automatically.
 
-\item \textbf{Managing Models, SAS-style}. The term model management
-  in the SAS literature is a distinct concept from the database
-  term. The idea is to track how a model is derived, how robust its
-  parameters are, which features are used in its construction. This
-  has proved extremely useful in the SAS area to support higher-level
-  business analytics. We plan to study this problem and develop an
-  abstraction to support it.
+%% \item \textbf{Managing Models, SAS-style}. The term model management
+%%   in the SAS literature is a distinct concept from the database
+%%   term. The idea is to track how a model is derived, how robust its
+%%   parameters are, which features are used in its construction. This
+%%   has proved extremely useful in the SAS area to support higher-level
+%%   business analytics. We plan to study this problem and develop an
+%%   abstraction to support it.
 
-\end{enumerate}
+%% \end{enumerate}
 
 \subsection{Florida Contributions: Statistical Text Analytics}
 
@@ -1144,16 +1157,16 @@ statistical models, such as Conditional Random Fields
 
 % our goal
 % what we've done
+\paragraph*{Pushing Statistical Text Analysis into MADLib}
 Based on the MADLib framework, our group set out to implement
-statistical methods in SQL to support various text analysis tasks.
-We use CRFs as the basic statistical model to perform more advanced
-text analysis. Similar to Hidden Markov Models (HMM)~cite{}, CRF is
-a leading probabilistic model for solving many text analysis tasks,
-including POS, NER and ER. We implemented four different statistical
-text analysis methods in MADLib, including text feature extraction,
-Viterbi inference, Markov-chain Monte Carlo inference, and
-approximate string matching. These statistical methods can be used
-to perform different text analysis tasks as shown in Table~\ref{tab:uflmethods}.  We proceed to discuss them in turn:
+statistical methods in SQL to support various text analysis tasks.  We
+use CRFs as the basic statistical model to perform more advanced text
+analysis. Similar to Hidden Markov Models (HMM)~cite{}, CRFs are a
+leading probabilistic model for solving many text analysis tasks,
+including POS, NER and ER~\cite{needed}. To support sophisticated text
+analysis, we implement text feature extraction, most likely inference
+over a CRF (Viterbi), Markov-chain Monte Carlo inference, and
+approximate string matching. 
 
 \begin{table}
   \centering
@@ -1167,8 +1180,8 @@ to perform different text analysis tasks as shown in Table~\ref{tab:uflmethods}.
   Approximate String Matching &  &  & $\checkmark$ \\
   \hline
 \end{tabular}
-\label{tab:uflmethods}
 \caption{Statistical Text Analysis Methods}
+\label{tab:uflmethods}
 \end{table}
 
 %% \dzw{Add query-driven text analysis? -- Motivation for query-driven
@@ -1176,27 +1189,52 @@ to perform different text analysis tasks as shown in Table~\ref{tab:uflmethods}.
 %% not need to be real-time query-driven (e.g., POS, feature
 %% extraction).}
 
-\textbf{Text Feature Extraction:} Text feature extraction is a step
-in most statistical text analysis methods and it is an expensive
-operation. There can be hundreds of features given a token. The main
-feature types include: (1) dictionary features: whether the token
-exists in each of the dictionaries; (2) regex features: whether the
-token string matches various regular expressions; (3) edge features:
-whether the label of the token is correlated with the label of the
-previous token; (4) word features: whether the token appeared in the
-training data; (5) unknown features: whether the token is unknown
-from the training data; (5) start/end features: whether the token is
-the first or last in the token sequence.
+\textbf{Text Feature Extraction:} Text feature extraction is a step in
+most statistical text analysis methods, and it can be an expensive
+operation. To achieve high quality, CRF methods often assign hundreds
+of features to each token in the document. Examples of such features
+include: (1) dictionary features: {\it does this token exists in a
+  provided dictionaries?}; (2) regex features: {\it does this token
+  matches a provided regular expressions?}; (3) edge features: {\it is
+  the label of a token correlated with the label of a previous
+  token?}; (4) word features: {\it does this the token appear in the
+  training data?}; (5) position features: {\it is this token is the
+  first or last in the token sequence?}. The right combination of
+features depends on the application, and so our supporting for feature
+extraction heavily leverages the micro-programming interface provided
+by MADlib.
 
-\textbf{Viterbi Inference:} \textit{Top-k} inference is the most
-frequently used statistical method over the CRF model. Top-k inference
-determines the label sequence with the top-k highest probabilities
-given a token sequence %\tokenseq from a \tf \str.
+\textbf{Approximate String Matching:} A recurring primitive operation
+in text processing applications is the ability to match strings
+approximately. We use is based on qgrams~\cite{}. This technique as an
+approximate string match was first introduced in the SQouT
+project~\cite{}. We used the trigram module in PostgreSQL to create
+and index 3-grams over text.  Given a string ``Tim Tebow'' we can
+create a 3-gram by using a sliding window of 3 characters over this
+text string. Given two strings we can compare the overlap of two sets
+of corresponding 3-grams and compute a similarity as the approximate
+matching score. This is an example of the data processing power
+that we can leverage by usign PostgreSQL.
 
-The \textit{Viterbi} dynamic programming algorithm~\cite{viterbi} is
-a key implementation technique for top-k inference over linear-chain
-CRF models. The following equation computes the top-1 label
-sequence. These can be easily extended to compute the top-k.
+%The similarity between $term_1$ and $term_2$ is computed using the
+%following equation:
+%
+%\begin{equation}\label{}
+%    S(term_1, term_2) = \frac{|term_1 \cup
+%    term_2|}{min\{|term_1|,|term_2|\}}.
+%\end{equation}
+
+Once we have the features, the next step is to perform inference on
+the model. We also implemented two types of statitical inference
+within the database: Viterbi (when we only want the most likely answer
+from the model) and MCMC (when we want the probabilities or confidence
+of an answer as well).
+
+\textbf{Viterbi Inference:} The \textit{Viterbi} dynamic
+programming algorithm~\cite{viterbi} is the popular algorithm to find
+the top-k most likely labelings of a document for (linear chain) CRF
+models. The following dynamic programming computes the top-1 label
+sequence. (This can be easily extended to compute the top-k).
 
 \vspace{-0.4cm}{\small
 \begin{equation}\label{Equation:crf_viterbi}
@@ -1207,11 +1245,15 @@ V(i,y) = \left\{\begin{array}{lll}
     \end{array}\right.
 \end{equation}}
 
+We leverage the macro-cordination features of MADlib to perform this
+inference. In particular, the algorithm is recursive, which is encoded
+using a combination of recursive SQL and window aggregate functions.
+
+%% CHRIS: I AM NOT SURE THIS IS CORRECT!
+
 \textbf{MCMC Inference:} Markov chain Monte Carlo (MCMC) methods are
-a class of randomized algorithms for estimating intractable
-probability distributions over large state spaces by constructing a
-Markov chain sampling process that converges to the desired
-distribution. We implemented two MCMC methods in MADLib: Gibbs
+classical sampling algorithms that can be used to estimate probability
+distributions. We implemented two MCMC methods in MADLib: Gibbs
 sampling and Metropolis-Hastings (MCMC-MH). The iterative Gibbs
 sampling algorithm is shown in Figure~\ref{Algo:Gibbs}.
 
@@ -1232,61 +1274,50 @@ sampling algorithm is shown in Figure~\ref{Algo:Gibbs}.
 with $n$ variables.}  \label{Algo:Gibbs}
 \end{figure}
 
-\textbf{Approximate String Matching:} The approximate string
-matching technique we use is based on qgrams~\cite{}. Qgrams---also
-known as character ngrams---can be implemented efficiently inside of a
-relational database. This technique as an approximate string match
-was first introduced in the SQouT project~\cite{}. We used the
-trigram module in PostgreSQL to create and index 3-grams over text.
-Given a string ``Tim Tebow'' we can create a 3-gram by using a
-sliding window of 3 characters over this text string. Given two
-strings we can compare the overlap of two sets of corresponding
-3-grams and compute a similarity as the approximate matching score.
-
-%The similarity between $term_1$ and $term_2$ is computed using the
-%following equation:
-%
-%\begin{equation}\label{}
-%    S(term_1, term_2) = \frac{|term_1 \cup
-%    term_2|}{min\{|term_1|,|term_2|\}}.
-%\end{equation}
+XXXX \textbf{ I DON'T KNOW HOW THIS WAS IMPLEMENTED }
 
 % main results, lessons, surprises
-Statistical methods can be implemented in a relational database
-efficiently. Prior work~\cite{} shows comparable performance between
-in-database SQL and off-the-shelf implementations. Real-time
-query-driven text analysis can be supported using indexes over a large
-document corpus, which can be orders-of-magnitude faster than an
-off-line batch process.
+\paragraph*{Using the MADLib Framework} 
+In addition to using the macro and micro programming feratures of the
+MADLib framework via user-defined functions and user defined
+aggregates, there were a host of other features of PostgreSQL/MADLib
+that are valuable for text analytics: (1) text analytics features such
+as inverted indexes, trigram indexes for approximate string matching,
+array data types for model parameters, (2) powerful query processing
+features such as recursive queries and window functions for passing
+states between iterations, and (3) the existing modules in MADLib,
+such as Naive Bayes and Sparse/Dense Matrix manipulations, are
+building blocks to implement statistical text analysis
+methods. Levearging this diverse set of tools and techniques that are
+already within the database allowed us to build a sophisticated text
+analysis engine that has comparable performance to off-the-shelf
+implementations~\cite{uncleartome}. 
 
-% facilities for text analysis in PostgreSQL
-In the process of developing statistical methods for text analysis,
-we applied and rediscovered the many PostgreSQL features for text
-analysis. In addition to inverted index, user defined functions, and
-user defined aggregates, we used array data types for model
-parameters, trigram indexes for approximate string matching, and
-recursive queries and window functions for passing states between
-iterations. Also, existing modules in MADLib, such as Naive Bayes
-and Sparse/Dense Matrix manipulations, can be very useful as
-building blocks to implement statistical text analysis methods.
+%% Statistical methods can be implemented in a relational database
+%% efficiently. Prior work~\cite{} shows comparable performance between
+%% in-database SQL and off-the-shelf implementations. Real-time
+%% query-driven text analysis can be supported using indexes over a large
+%% document corpus, which can be orders-of-magnitude faster than an
+%% off-line batch process.
 
-\textbf{Query-Driven Techniques}
 
-Information Extraction (Viterbi, Feature Extraction)
+%% \textbf{Query-Driven Techniques}
 
-Entity Resolution (MCMC, Approximate String Matching)
+%% Information Extraction (Viterbi, Feature Extraction)
 
-\textbf{Future Work}
+%% Entity Resolution (MCMC, Approximate String Matching)
 
-\begin{itemize}
-  \item Performance Improvement (Feature Extraction)
-  \item MPP Implementation
-  \item POS/IE/ER models
-  \item Text Analysis query interface design
-\end{itemize}
-Performance Improvement (Feature Extraction) MPP Implementation
-POS/IE/ER models Query-driven Text Analysis Interface (including
-key-word search and more advanced)
+%% \textbf{Future Work}
+
+%% \begin{itemize}
+%%   \item Performance Improvement (Feature Extraction)
+%%   \item MPP Implementation
+%%   \item POS/IE/ER models
+%%   \item Text Analysis query interface design
+%% \end{itemize}
+%% Performance Improvement (Feature Extraction) MPP Implementation
+%% POS/IE/ER models Query-driven Text Analysis Interface (including
+%% key-word search and more advanced)
 
 
 
