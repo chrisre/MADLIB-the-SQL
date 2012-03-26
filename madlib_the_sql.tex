@@ -10,6 +10,9 @@
 \usepackage{balance}  % for  \balance command ON LASMAD PAGE  (only there!)
 \usepackage{alltt,algo}
 \usepackage{url}
+\usepackage{ctable} % Nicer tables, e.g., \toprule
+\usepackage{verbatim} % Also provides the comment environment
+\usepackage{dcolumn} % Decimal point alignment in tables
 
 \makeatletter
 % The vldb style file is an anachronsism. So no need to worry about hacks anyway.
@@ -30,6 +33,16 @@
 
 \usepackage{minted}
 
+% BEGIN Layout
+	\newcommand{\otoprule}{\midrule[\heavyrulewidth]}
+	
+	\newcolumntype{+}{>{\global\let\currentrowstyle\relax}}
+	\newcolumntype{^}{>{\currentrowstyle}}
+	\newcommand{\rowstyle}[1]{\gdef\currentrowstyle{#1}%
+		#1\ignorespaces
+	}
+% END Layout
+
 % BEGIN Convenience commands
 	\newcommand{\todo}[1]{\textbf{\color{red}#1}}
 
@@ -44,6 +57,17 @@
 					  numbersep=5pt,
 					  fontsize=\scriptsize,
 					  framesep=2mm}
+	\newminted{sql}{mathescape,
+					numbersep=5pt,
+					tabsize=4,
+					gobble=8,
+					fontsize=\scriptsize,
+					framesep=2mm}
+	\newminted{psql}{numbersep=5pt,
+					tabsize=4,
+					gobble=8,
+					fontsize=\scriptsize,
+					framesep=2mm}
 	% END Listing environments
 % END Convenience commands
 
@@ -404,7 +428,7 @@ for QA support on additional database engines).
 The core of traditional SQL---\texttt{SELECT...} \texttt{FROM...} \texttt{WHERE}... \texttt{GROUP BY}---is
 quite a powerful harness for orchestrating bulk data processing across
 one or many processors and disks.  It is also a portable, native
-language supported by range of widely-deployed open source and
+language supported by a range of widely-deployed open source and
 commercial database engines.  This makes SQL an attractive
 framework for writing data-intensive programs.  Ideally, we would like
 MADlib methods to be written entirely in straightforward and portable
@@ -432,7 +456,7 @@ partitioning of the matrix, and a pattern to process the pieces and
 merge results back together.  This partitioning and dataflow is
 currently outside the scope of a traditional query optimizer or
 database design tool.  But there is a rich literature from scientific
-computing on these issues~\cite{demmel} that database programmers can use to craft efficient in-database implementations.  Once data is properly partitioned, database engines shine at orchestrating the
+computing on these issues~\cite{demmel} \todo{I suppose this refers to ``Applied numerical linear algebra''?} that database programmers can use to craft efficient in-database implementations.  Once data is properly partitioned, database engines shine at orchestrating the
 resulting data movement of partitions and the piecewise results of
 computation.
 
@@ -443,6 +467,8 @@ involved SQL queries.  When implemented correctly, the performance of the script
 occasionally to kick off much larger bulk tasks that are executed by
 the core database engine.
 
+\subsubsection{Templated Queries}
+
 The first problem we faced is a limitation of SQL's roots in
 first-order logic, which requires that queries be cognizant of the
 schema of their input tables, and produce output tables with a fixed
@@ -451,30 +477,32 @@ work over arbitrary schemas, with the details of column names and
 types to be filled in later.  For example, the multivariate linear
 regression algorithm of Section~\ref{sec:regression} is designed to run over any subset
 of the columns of an input table, producing an output table including
-the same columns as well as a predicted output column.  SQL helps with
+the same columns as well as a predicted output column. \todo{Actually, in most algorithms we only work with vectors/arrays, and variable arity does not pose a problem. Only when an algorithm prescribes how non-numerical input columns should be encoded, we have to work with variable arity (e.g., the C4.5 decision-tree algoorithm does that). Still, \emph{all} iterative algorithm necessarily rely on templated SQL.} SQL helps with
 problems of data types and casting, but cannot help with the variable
 arity of inputs and outputs.  To address this issue, we use Python
 UDFs to interrogate the database catalog for details of input tables,
 and then synthesize customized SQL queries based on templates to
-produce outputs.  {\bf Figure~\ref{fig:secondorder} shows Python code that illustrates this.} This pattern is currently done in an ad hoc way in
+produce outputs.  {\bf Figure~\ref{fig:secondorder} shows Python code that illustrates this.} \todo{We don't have Python code for that. The DT code is not even Python unfortunately. Listing~\ref{fn:log-reg-driver} does, however, give an example of templated SQL.} This pattern is currently done in an ad hoc way in
 each method that needs it.  In future we plan to support this pattern
 as a Python library that ships with MADlib.
 
+\subsubsection{Driver Functions}
+
 A second problem is the prevalence of iterative algorithms for many
 methods in statistics, particularly stochastic methods like Gradiant
-Descent and Monte Carlo simulation in which the number of iterations
+Descent \todo{maybe more generally ``solving optimization problems''?} and Monte Carlo simulation in which the number of iterations
 is determined by a data-dependent stopping condition at the end of
 each round.  There are multiple SQL-based workarounds for this
 problem, which depend on the context.  In order to drive independent
 iterations, it is often simplest (and very efficient) to use a
-set-oriented join---this is an approach that we used to implement
+set-oriented join \todo{Google finds only 8 results for ``set oriented join''. Is it really a technical term?}---this is an approach that we used to implement
 Bootstrap sampling in the original MAD Skills paper~\cite{MADSkills}.  For
 settings where the current iteration depends on previous iterations,
-SQL's windowed aggregate feature can sometimes work.   Wang, et al. took
+SQL's windowed aggregate feature can sometimes work. \todo{What is the idea here? We should either have a little bit more detail here, so that readers have an understanding, or omit this comment.}  Wang et al.\ took
 this approach to implement in-database MCMC inference~\cite{Daisy11}.  Most
 generally, it is possible to use the recursion features of SQL to
 perform iteration with arbitrary stopping conditions---this was used by
-Wang, et al.\ to implement Viterbi inference~\cite{Daisy10}.  Unfortunately,
+Wang et al.\ to implement Viterbi inference~\cite{Daisy10}.  Alternatively, some DBMSs might support multi-pass user-defined aggregate together with a stopping criterion. Unfortunately,
 the level of support for SQL's windowed aggregates and recursion
 varies across database products, and does not form a reliable
 basis for portability.
@@ -486,59 +514,90 @@ out of the database and into the driver code; this becomes a
 scalability bottleneck since the driver code typically does not
 parallelize and hence pulls all data to a single node.  We avoid this
 via a design pattern in which the driver UDF kicks off each iteration
-and stages its output into a temporary table via \texttt{CREATE TEMP TABLE
+and stages its output into a temporary table via \texttt{CREATE TEMP TABLE...
 AS SELECT...} It then interrogates the resulting temp table using small
 aggregate queries as needed.  As a result, all large-data movement is
 done within the database engine and its buffer pool.
 Database engines typically provide efficient parallelism as well as
 buffering and spill files on disk for large temp tables, so this
 pattern is quite efficient in practice.
+
+\subsubsection{The Fold / Map-Reduce Paradigm in SQL}
+
+The most important and the most basic building block in the macro-programming of MADlib is the use of user-defined aggregates (UDAs). In general, aggregates---and the related window functions---are the only way in SQL to implement mathematical functions that take as input the values of an arbitrary number of rows (tuples). Unfortunately, the SQL standard does not prescribe an extension interface, and user-defined aggregates are entirely vendor-specific. Yet, the fold (or ``map-reduce'') paradigm is natural and ubiquitous, so that we expect user-defined aggregates to be very portable. In PostgreSQL/Greenplum terminology, a user-defined aggregate consists of up to three user-defined functions:
+\begin{enumerate}
+	\item A \emph{transition function} that takes the current transition state $z$ and a new data point $x$. The transition function computes $f(x)$ and combines this with $z$ into a new transition state $z'$. The transition function is equivalent to the ``combining'' function passed to linear \emph{left-fold} functions in functional-programming languages.
+	\item A \emph{merge function} that takes two transition states and transforms them into a new combined transition state. Again in functional-programming terms, a merge operation is a tree-like fold.
+	\item A \emph{final function} that takes a transition state and transforms it into the output value.
+\end{enumerate}
+Clearly, a user-defined aggregate is inherently data-parallel if the combining step in the transition function is associative and the merge function returns the same result as if the transition function was called repeatedly for every individual element in the second state.
+
+
 \subsection{MicroProgramming: Data Representations and Inner Loops}
 
 In addition to doing the coarse-grained orchestration of chunks, the
 database engine must very efficiently invoke the single-node code that
-performs arithmetic on those chunks.  For dense matrices, the standard
-practice is to write UDFs in C or C++ that use the database engine to
-make native calls to an open-source library like LAPACK.  Sparse
+performs arithmetic on those chunks.  For UDFs that operate at the row level (or those that are called even multiple times per row), the standard practice is to write UDFs in C or C++. When computing dense matrix operations, these functions would
+make native calls to an open-source library like LAPACK~\cite{laug} or Eigen~\cite{eigenweb}.
+
+Sparse
 matrices are not as well-handled by standard math libraries, and require
 more customization for efficient representations both on disk and in
 memory.  We chose to write our own sparse matrix library in C for
-MADlib, which {\bf XXX SAY SOMETHING ABOUT THE REPRESENTATION}.  Both of
+MADlib, which implements the run-length encoding scheme.  Both of
 these solutions require careful low-level coding, and formed part of
-the overhead of getting MADlib started.
+the overhead of getting MADlib started. \todo{We inherited the sparse-vector implementation and did not actually make a decision on expected needs. So maybe we should deemphasize this point.}
 
 The specifics of a given method's linear algebra can be coded in a
 low-level way using loops of basic arithmetic in a language like C,
 but it is nicer if they can be expressed in a higher-level syntax that
 captures the semantics of the linear algebra at the level of matrices
-and arrays.  We provide a C++ abstraction layer in MADlib for this
-type of code.  
+and arrays. Moreover, maintainability as well as portability demands that database logic and API not be intermixed with mathematical code.  We therefore provide a C++ abstraction layer in MADlib for writing performance-critical inner loops.
+
+\subsection{Abstraction Layers}
+
+The basic responsibility for the C++ abstraction layer is to bridge database types to native C++ types. For a DBMS, a user-defined function implemented in a compiled language is typically nothing more but a symbol (i.e., an address) in a shared library. As such, DBMS APIs typically specify that UDFs must have a fixed signature, and arguments are instead passed as an array of pointers along with additional meta data. Hand-written C code would therefore often consist of long boilerplate code that is very specific to the underlying DBMS: Making sure that the passed data is of the correct type, copying immutable data before doing modifications, verifying array lengths, etc. Our C++ abstraction layer encapsulates all this within the recursive \texttt{AnyType} class that can contain either a primitive type (like, e.g., \texttt{int} or \texttt{double}) or multiple other values of type \texttt{AnyType} (for representing a composite type). This encapsulation works both for passing data from the DBMS to the C++ function, as well as returning values back from C++. To give an example: A simple, portable, and completely type-safe (though arguably not very useful) function that adds two numbers can thus be implemented with essentially as little code as in a high-level scripting language:
+\begin{cppcode*}{gobble=8}
+	AnyType
+	sum_two_doubles::run(AnyType &args) {
+	    return args[0].getAs<double>()
+	         + args[1].getAs<double>();
+	}
+\end{cppcode*}
+
+A second responsibility of the abstraction layer is to supplement the bridging with additional semantics, in order to facilitate rapid implementation of mathematical functions: For instance, double-precision arrays in the DBMS are the canonic way to represent vectors in Euclidean space. Our C++ abstraction layer therefore not just provides an array-to-array bridge but also maps DBMS arrays to vectors of the linear-algebra library Eigen~\cite{eigenweb}. That way users can immediately make use of the very sophisticated vector and matrix operations provided by Eigen.
+
+The abstraction layer can also help compensating for SQL's lack of higher-order logic: For instance, an \texttt{AnyType} object can contain a ``pointer'' to a user-defined function. With the syntactic sugar possible in C++, this essentially makes in-database function first-class objects like they commonly are in modern programming languages. Internally, the abstraction layer maps UDFs to their object ID in the database, and it takes care of looking up the function in the database catalog, verifying argument lists, ensuring type-safety, etc.
+
+A third aspect of the C++ abstraction layer is to provide a safe and robust runtime environment with a standard interface. For instance, PostgreSQL maintains a hierarchy of memory contexts: When a query is started, a new memory context is created and all transient memory allocations are supposed to occur within this context. When the query ends, disposing of the query context provides a simple and effective way of garbage collection. Our C++ abstraction layer makes sure that such modi operandi are followed. On the other hand, the C++ abstraction layer also facilitates writing C++ code with a well-defined interface. This is particularly necessary if (as is typically the case) a DBMS only provides a C plugin interface: In that case it is important that exceptions, signals, etc. to not cross runtime boundaries.
+
+Finally, by incorporating proven third-party libraries, the C++ abstraction layer makes it easy for MADlib developers to write correct and performant code: E.g., the Eigen linear-algebra library contains well-tested and well-tuned code that makes use of the SIMD instruction sets (like SSE) found in today's CPUs. Likewise, provisions for efficient value marshalling have been made. Some examples include: All type bridges are aware of mutable and immutable objects and avoid making copies whenever possible. DBMS-catalogue lookups are minimized by caching.  By virtue of being a template library, the runtime and abstraction overhead is reduced to a minimum, etc.
+
+Figure~\ref{fig:regression} illustrates our progress in performance tuning, but also shows that some runtime overhead still has to be resolved. We intend to reduce any overhead by the C++ abstraction layer to virtually zero before reaching version 1.0. Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final} show reduced, but fully functional, code snippets that implement linear-regression as discussed in the following Section~\ref{sec:regression}.
 
 \subsection{Example: Single-Pass Algorithms}
 
-\subsubsection{Ordinary Least Squares}
+\subsubsection{Ordinary Least Squares} \label{sec:regression}
 
 In ordinary-least-squares (OLS) linear regression the goal is to fit a hyperplane to a set of points, with the objective of minimizing the sum of squared residuals. Formally, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \R$, and our goal is to find the vector $\widehat{\vec b}$ that minimizes $\sum_{i=1}^n (y_i - \langle \widehat{\vec b}, \vec x_i \rangle)^2$. OLS is one of the most fundamental methods in statistics: Typically, each $y_i$ is assumed to be an (independent) noisy measurement of $\langle \vec b, \vec x_i \rangle$, where $\vec b$ is an unknown but fixed vector and the noise is uncorrelated with mean 0 and unknown but fixed variance. Under these assumptions, $\widehat{\vec b}$ is the best linear unbiased estimate of~$\vec b$ (Gauss-Markov). Under additional assumptions (normality, independence), $\widehat{\vec b}$ is also the maximum-likelihood estimate. Letting $X$ denote the matrix whose rows are $\vec x_i^T$, and defining $\vec y := (y_1, \dots, y_n)^T$, it is well-known that the sum of squared residuals is minimized by $\widehat{\vec b} = (X^TX)^{-1}X^T \vec y$ (for simplicity, we only consider the full-rank case here).
 
-It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations \cite{DBLP:conf/nips/ChuKLYBNO06}. In the following, we take OLS linear-regression as an example for discussing MADlib's internal implementation in detail. The principal observation is this: Since $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point, we can compute these sums in a single pass over the data. In fact, since summation is associative, data parallelism virtually comes for free: We can compute the per-segment subsums of the previous expressions locally on each segment, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the (pseudo\nobreakdash-)inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
+It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations \cite{DBLP:conf/nips/ChuKLYBNO06}. In the following, we take OLS linear-regression as an example implementing a user-defined aggregate for MADlib. The principal observation is this: Since $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point, we can compute these sums in a single pass over the data. In fact, since summation is associative, data parallelism virtually comes for free: We can compute the per-segment subsums of the previous expressions locally on each segment, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the (pseudo\nobreakdash-)inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
 
 \subsubsection{MADlib Implementation}
 
-The above description directly translates into an implementation through a user-defined aggregate, which (in PostgreSQL/Greenplum terminology) consists of:
-\begin{enumerate}
-	\item A \emph{transition function} that takes the current transition state and a new data point. Its output is the combined transition state. The transition function is equivalent to the ``combining'' function passed to \emph{left-fold} functions in functional-programming languages.
-	\item A \emph{merge function} that takes two transition states and transforms them into a new combined transition state.
-	\item A \emph{final function} that takes a transition state and transforms it into the output value.
-\end{enumerate}
-While the fold-paradigm is natural, and arguably ubiquitous for implementing aggregates (MySQL, PostgreSQL, Map-Reduce, etc.), the SQL standard does not prescribe an extension interface, and user-defined aggregates are entirely vendor-specific. For MADlib, we therefore implemented an abstraction layer that facilitates encapsulating user-defined-function logic from DBMS logic or its APIs. The design was guided by the four requirements correctness, robustness, performance, and maintainability/portability. These requirements manifest in the code as follows---with the following not meant to be exhaustive. See Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final} for reduced, but fully functional, excerpts from the MADlib source code.
-\begin{itemize}
-	\item MADlib does not reinvent the wheel but uses proven third-party party libraries for linear-algebra code and other mathematical code. (All requirements)
-	\item MADlib aggregates are written in C or (preferably) C++. Arguments are passed by reference to immutable data structures. (Performance)
-	\item Mutable data structures are provided for cases where data can be safely modified in-place. Should a DBMS not provide mutable values, the abstraction layer creates mutable copies transparently. (Performance)
-	\item By virtue of being a template library, the runtime and abstraction overhead is reduced to a minimum. (Performance)
-	\item The C++ abstraction layer provides a complete encapsulation, and no DBMS-specific API is used. (Maintainability)
-	\item To the greatest extend supported by the DBMS, the abstraction layer catches all type errors and facilitates writing strictly type-safe code. (Robustness)
-\end{itemize}
+We assume that data points are stored as \texttt{(x DOUBLE PRECISION[], y DOUBLE PRECISION)} tuples. Linear regression is then implemented as a user-defined aggregate with a transition and final function roughly as in Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final}, respectively. The merge function just adds all values in the transition states together.
+
+\begin{Verbatim}[commandchars=\\\{\}, ,numbersep=5pt,tabsize=4,fontsize=\scriptsize ,framesep=2mm]
+psql# \PY{k}{SELECT} \PY{p}{(}\PY{n}{linregr}\PY{p}{(}\PY{n}{y}\PY{p}{,} \PY{n}{x}\PY{p}{)}\PY{p}{)}\PY{p}{.}\PY{o}{*} \PY{k}{FROM} \PY{n}{data}\PY{p}{;}
+-[ RECORD 1 ]+--------------------------------------------
+coef         | \{1.73071268159411,2.24279312002405\}
+r2           | 0.947520042268114
+std_err      | \{0.325768074771675,0.0533185970021179\}
+t_stats      | \{5.31271421488165,42.0639935430964\}
+p_values     | \{6.76812299982288e-07,4.44089209850063e-16\}
+condition_no | 169.509326412661
+\end{Verbatim}
+
 
 \begin{code}
 	\begin{cppcode*}{gobble=16}
@@ -593,8 +652,6 @@ While the fold-paradigm is natural, and arguably ubiquitous for implementing agg
 	\label{fn:lin-reg-final}
 \end{code}
 
-Given the user-defined aggregate, running MADlib's linear regression takes a mere SQL statement of form ``\texttt{SELECT madlib.linregr(y, x) FROM data}''.
-
 \subsection{Example: Multi-Pass Algorithms}
 
 \subsubsection{(Binary) Logistic Regression}
@@ -605,9 +662,13 @@ It is well-known that, in general, no closed-formula expression for $\widehat{\v
 
 \subsubsection{MADlib Implementation}
 
-Obviously, each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop, which we call driver. Unfortunately, the most obvious implementations, via recursive queries or multi-pass user-defined aggregates lack wide-spread support in today's DBMSs.
+Obviously, each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop. We therefore implement a driver UDF in Python, as shown in Listing~\ref{fn:log-reg-driver}. MADlib provides the Python function \texttt{runIterativeAlg} that iteratively calls an aggregate function, stores the computed state, and terminates once the stopping criterion has been reached.
 
-The only portable option left is thus to drive iterations from within a user-defined function. For portability we chose to implement such driver function in Python. See Listing~\ref{fn:log-reg-driver}. \todo{To be completed.}
+Unfortunately, implementing logistic regression as a function as opposed to an aggregate leads to a different syntax.
+\begin{sqlcode}
+	SELECT * FROM logregr('y', 'x', 'data');
+\end{sqlcode}
+The two main issues with this syntax are that a UDF can obviously not be used like an aggregate function in grouping constructs. First, doing multiple logistic regressions at once is thus much harder than multiple linear regressions. Second, this syntax hides identifiers from the SQL parser. Instead, MADlib is burdened with the responsibility of name binding, including all needed validation and error handling. Also, any errors will only be detected at runtime.
 
 \begin{code}
 	\begin{pythoncode*}{gobble=16}
@@ -627,7 +688,8 @@ The only portable option left is thus to drive iterations from within a user-def
 		            indepColumn = indepColumn,
 		            optimizer = optimizer),
 		    terminateExpr = """
-		        {MADlibSchema}.internal_logregr_{optimizer}_step_distance(
+		        {MADlibSchema}.
+		        internal_logregr_{optimizer}_step_distance(
 		            {{newState}}, {{oldState}}
 		        ) < {precision}
 		        """.format(
@@ -642,38 +704,162 @@ The only portable option left is thus to drive iterations from within a user-def
 
 \subsection{Example: Dealing with Large States}
 
-\todo{To be completed.}
-Example k-means:
-\begin{itemize}
-	\item even though the current state is completely captured by the set of centroids, we want to cache distances
-	\item Won't fit into memory
-	\item Need to resort to temporary tables.
-\end{itemize}
+\subsubsection{k-Means}
+
+In $k$-means clustering, we are given $n$ points $x_1, \dots, x_n \in \R^d$, and our goal is to position $k$ centroids $c_1, \dots, c_k \in \R^d$ so that the sum of squared distances between each point and its closest centroid is minimized. Formally, we wish to minimize
+\begin{math}
+    \sum_{i=1}^n \min_{j=1}^k \|x_i - c_j \|^2.
+\end{math}
+This problem is known to be NP-hard unless $d$ and $k$ are fixed \cite{ADH09a,MNV10a}. However, the local-search heuristic proposed by Lloyd~\cite{L82a} performs reasonably well both in theory and in practice~\cite{AV07a,AMR09a}. At a high level, it works as follows:
+%
+\begin{enumerate}
+	\item Seeding phase: Find initial positions for $k$ centroids $c_1, \dots, c_k$.
+	\item Assign each point $x_1, \dots, x_n$ to its closest centroid. \label{enum:kmeans_abstract_points}
+	\item Reposition each centroid to the barycenter (mean) of all points assigned to it.
+	\item If no (or only very few) points got reassigned, stop. Otherwise, goto \eqref{enum:kmeans_abstract_points}.
+\end{enumerate}
+
+\subsubsection{MADlib implementation}
+
+Based on the assumption that we can always comfortably store $k$ centroids in main memory, we can implement $k$-means similarly to logistic regression: Using a driver function that iteratively calls a user-defined aggregate. In the following, we take a closer look at this implementation. It is important to make a clear distinction between the inter\nobreakdash- and intra-iteration state. The aggregate transition state contains both, but only modifies the intra-iteration state. We only store $k$ centroids in both the inter\nobreakdash and intra-iteration states, and consider the assignments of points to centroids as implicitly given.
+
+In the aggregate transition function, we first compute the centroid that the current point was closest to at the beginning of the iteration, i.e., using the inter-iteration state. We then update the barycenter of this centroid in the intra-iteration state. Only as the final step of the aggregate, the intra-iteration state becomes the new inter-iteration state.
+
+Unfortunately, in order to check the convergence criterion that no or only few points got reassigned, we have to do two closest-centroid computations per point and iteration: First, we need to compute the closest centroid in the previous iteration and then the closest one in the current iteration. If we stored the closest points explicitly, we could avoid half of the closest-centroid calculations.
+
+Assuming that points are stored in a table called \texttt{points}, the array of centroids is \texttt{centroids}, column \texttt{coords} contains the points' coordinates, and \texttt{closest\_point(a,b)} is a user-defined function that determines the point in array \texttt{a} that is closest to \texttt{b}, we could make the point-to-centroid assignments explicit using the following SQL:
+\begin{sqlcode}
+	UPDATE points
+	SET centroid_id = closest_point(centroids, coords)
+\end{sqlcode}
+Ideally, we would like to to perform the point reassignment and the repositioning with a single pass over the data. Unfortunately, this cannot be expressed in standard SQL. While PostgreSQL and Greenplum provide an optional \texttt{RETURNING} clause, this returns one row for each row affected by the \texttt{UPDATE} query, and aggregates cannot be used withing the \texttt{RETURNING} clause at all. Moreover, an \texttt{UPDATE ... RETURNING} cannot be used as a subquery.
+
+Therefore, while we can reduce the number of closest-centroid calculations by one half, PostgreSQL and Greenplum process queries one-by-one (and do not perform cross-statement optimization), so they will need to make two passes over the data per one $k$-means iteration. In general, it will depend depend on the DBMS, the data, the hardware, etc.\ whether explicitly storing points leads to a performance improvement.
+
+Unfortunately, there are even more uncertainties in the implementation: E.g., PostgreSQL performs an update by first inserting a new row and then marking the old row as invisible \cite[Section~23.1.2]{postgres:9.1.3}. This results in that a \texttt{CREATE TABLE} followed by \texttt{DROP TABLE} is typically faster than an \texttt{UPDATE}, unless the number of updated rows is small. Our goal is to eventually hide much of the SQL generation in versatile abstraction layers. \todo{That's my goal, but do we really work in that direction?}
 
 \subsection{MADlib Performance}
 
-\todo{To be completed. Might remove comments about the reference BLAS because anybody with HPC background is well aware that this is not a tuned library.}
-Our runtime measurements fit will to the theoretical asymptotical runtime behavior. Roughly, the relevant terms are (as expected)
-\begin{gather*}
-	a \cdot k^3 + \frac 1p \cdot (b \cdot n \cdot k^2 + c)
-\end{gather*}
-where $k$ is the number of independent variables, $n$ is the number of rows, $p$ is the number of segments, and $a$, $b$, and $c$ are constants. \todo{Substantiate. Determine values for $a,b,c$.} In particular: If the quadratic term dominates (the number of independent variables is less than a couple of hundred), Greenplum has a linear speed-up in the number of segments.
+In order to evaluate the scalability of our basic building block ``user-defined aggregate (with driver function)'', we ran linear regression on various data sizes. The hardware is a cluster of four SuperMicro X8DTT-H server modules, each equipped with one six-core Intel Xeon X5670 processor, clocked at 2.93~GHz. While hyperthreading is enabled, we only run a single Greenplum segment per physical core. Each machine has 24~GB of RAM, an LSI MegaRAID~2108 ``Raid On a Chip'' controller with six attached 360~GB solid-state drives, and a Brocade~1020 converged network adapter. The operating system is Red Hat Enterprise Linux Server release 5.5 (Tikanga). On that we are running the Greenplum database 4.2.0, compiled with gcc~4.4.2\footnote{\raggedright{}The following gcc options were used to compile the Greenplum database: \texttt{-O3 -funroll-loops -fargument-noalias-global -fno-omit-frame-pointer -finline-limit=1800 -fno-strict-aliasing -fwrapv -g}}. 
 
-On current hardware, computing the pseudo-inverse with libraries such as Eigen, or LAPACK/BLAS is in the order of more than a minute if the number of independent variables reaches one thousand. In that case, the cubic term often dominates.
-
+For running linear regression as outlined in Section~\ref{sec:regression}, we expect runtime
+\begin{math}
+	O(k^3 + (n \cdot k^2)/p)
+\end{math}
+where $k$ is the number of independent variables, $n$ is the number of observations, and $p$ is the number of segments. Obviously, time $k^3$ is needed for the matrix inversion, and time $k^2$ is needed for computing each outer product $\vec x_i \vec x_i^T$ and adding it to the running sum. It turns out that our runtime measurements fit these expectations quite well, and the constant factors are relatively small. See Figure~\ref{fig:regression}. In particular we note:
 \begin{itemize}
-
-          \item There are no performance differences between PostgreSQL 9.1.1 (both in single and multi-user mode) and GP 4.1 in running the aggregate function on on a single core.
-          \item Single-core performance among laptop CPUs (like the Core i5 540M) and server CPUs (like the Xeon X5680 in a DCA) does not differ much. Typically even less than what the difference in clock speeds might suggest.
-          \item BLAS implementations are typically far from
-            perfect. It turns out that computing $x^T * x$ for a row
-            vector $x$ is about $3\times$ slower than computing $y * y^T$
-            for a column vector of the same dimension, both with the
-            reference BLAS implementation and with Apple's Accelerate
-            framework.  
-
-            \item  Real performance numbers are given in
+	\item The overhead for a single query is very low and only a fraction of a second. This also implies that we lose little in implementating iterative algorithms using driver functions that run multiple SQL queries.
+	\item Given the previous points, the Greenplum database achieves perfect linear speedup in the example shown.
 \end{itemize}
+
+In the example, all data was essentially in the buffer cache, and disk I/O was not a limiting factor. This is quite typical in practice: An analyst would run a machine-learning several times with different parameters, and given massive amounts of main memory on each node in the cluster, much of the data would remain in the cache. Moreover, the computational cost per row grows at least quadratically, and thus will easily surpass I/O cost for complex models. As we compare various cluster sizes and number of independent variables and the respective execution times for previous versions of MADlib, the lesson we learned is that even though we anticipate non-trivial overhead by the DBMS, careful performance tuning---e.g., by making use of instruction-accurate profiling using Valgrind~\cite{NS07a}---still makes significant differences:
+\begin{itemize}
+	\item Version 0.1alpha is an implementation in C that computes the outer-vector products $\vec x_i \vec x_i^T$ as a simple nested loop.
+	\item Version 0.2.1beta introduced an implementation in C++ that used the the Armadillo \cite{armadillo} linear-algebra library as a frontend for LAPACK/BLAS. It turns out that this version was much slower for two reasons: The BLAS library used was the default one shipped with CentOS 5, which is built from the untuned reference BLAS. It turned out that computing $\vec y^T * \vec y$ for a row vector $\vec y$ is about three to four times slower than computing $\vec x * \vec x^T$ for a column vector of the same dimension (and the MADlib implementation unfortunately used to do the former). Interestingly, the same holds for Apple's Accelerate framework on Mac~OS~X, which Apple promises to be a tuned library. The second reason for the speed disadvantage is runtime overhead in the first incarnation of the C++ abstraction layer (mostly due to locking and calls into the PostgreSQL/Greenplum backend).
+	\item Version 0.3 has un updated linear-regression implementation that relies on the Eigen C++ linear-algebra library and takes advantage of the fact the the matrix $X^T X$ is symmetric positive definite. Runtime overhead has been reduced, but some calls into the database backend still need better caching.
+\end{itemize}
+%
+Other noteworthy results during our performance studies included that there are no measurable performance differences between PostgreSQL 9.1.1 (both in single and multi-user mode) and GP 4.1 in running the aggregate function on on a single core. Moreover, while testing linear/logistic-regression execution times, single-core performance of even laptop CPUs (like the Core i5 540M) did not differ much from today's server CPUs (like the Xeon family). Typically the difference were even less than what the difference in clock speeds might have suggested.
+
+
+\begin{comment}
+% The following script was used for testing linear regression:
+% --8<--
+#!/usr/bin/env bash
+PORT=5555
+DB=schopf
+VARS_LIST="10 20 40 80 160 320"
+ROWS_LIST=10000000
+GENERATOR=./LinearRegressionRandom
+PSQL_ARGS="--port ${PORT} --tuples-only --output /dev/null ${DB}"
+TABLE_NAME_FMT='linregr_v${VARS}_r${ROWS}'
+
+for ROWS in ${ROWS_LIST}; do
+	for VARS in ${VARS_LIST}; do
+		TABLE_NAME=$(eval "echo ${TABLE_NAME_FMT}")
+		psql ${PSQL_ARGS} &> /dev/null <<-EOF
+			DROP TABLE IF EXISTS ${TABLE_NAME};
+			CREATE TABLE ${TABLE_NAME} (
+				id SERIAL,
+				x DOUBLE PRECISION[],
+				y DOUBLE PRECISION
+			);
+		EOF
+		${GENERATOR} -i ${VARS} -r ${ROWS} -t | \
+			psql ${PSQL_ARGS} -c \
+				"COPY ${TABLE_NAME}(x, y) FROM STDIN;"
+		psql ${PSQL_ARGS} <<-EOF
+			SELECT count(*) FROM ${TABLE_NAME};
+			\timing
+			\echo MADlib v0.2.1beta. Vars: ${VARS} Rows: ${ROWS}
+			SELECT (madlib_0_2_1beta.linregr(y,x)).coef[1] FROM ${TABLE_NAME};
+			\echo
+		EOF
+		psql ${PSQL_ARGS} <<-EOF
+			SELECT count(*) FROM ${TABLE_NAME};
+			\timing
+			\echo MADlib v0.3. Vars: ${VARS} Rows: ${ROWS}
+			SELECT (madlib_0_3_g553770b.linregr(y,x)).coef[1] FROM ${TABLE_NAME};
+			\echo
+		EOF
+		psql ${PSQL_ARGS} <<-EOF
+			SELECT count(*) FROM ${TABLE_NAME};
+			\timing
+			\echo Greenplum. Vars: ${VARS} Rows: ${ROWS}
+			SELECT (mregr_coef(y,x))[1] FROM ${TABLE_NAME};
+			\echo
+		EOF
+    done
+done
+% -->8--
+
+\end{comment}
+
+\begin{figure*}
+\centering
+\begin{tabular}{+r^r^rD{.}{.}{3.3}D{.}{.}{3.3}D{.}{.}{3.4}}
+\toprule\rowstyle{\bfseries}
+\# segments & \# variables & \multicolumn{1}{^c}{\# rows}
+										  & \multicolumn{1}{^c}{v0.3}
+													& \multicolumn{1}{^c}{v0.2.1beta}
+																 & \multicolumn{1}{^c}{v0.1alpha}\\
+			&             & \multicolumn{1}{^c}{(million)}
+										  & \multicolumn{1}{^c}{(s)}
+													& \multicolumn{1}{^c}{(s)}
+																 & \multicolumn{1}{^c}{(s)} \\
+\otoprule
+          6 &     10       & 10 &   4.447 &   9.501 &   1.337 \\
+          6 &     20       & 10 &   4.688 &  11.60  &   1.874 \\
+          6 &     40       & 10 &   6.843 &  17.96  &   3.828 \\
+          6 &     80       & 10 &  13.28  &  52.94  &  12.98  \\
+          6 &    160       & 10 &  35.66  & 181.4   &  51.20  \\
+          6 &    320       & 10 & 186.2   & 683.8   & 333.4   \\
+\midrule
+         12 &     10       & 10 &   2.115 &   4.756 &   0.9600\\
+         12 &     20       & 10 &   2.432 &   5.760 &   1.212 \\
+         12 &     40       & 10 &   3.420 &   9.010 &   2.046 \\
+         12 &     80       & 10 &   6.797 &  26.48  &   6.469 \\
+         12 &    160       & 10 &  17.71  &  90.95  &  25.67  \\
+         12 &    320       & 10 &  92.41  & 341.5   & 166.6   \\
+\midrule
+         18 &     10       & 10 &   1.418 &   3.206 &   0.6197\\
+         18 &     20       & 10 &   1.648 &   3.805 &   1.003 \\
+         18 &     40       & 10 &   2.335 &   5.994 &   1.183 \\
+         18 &     80       & 10 &   4.461 &  17.73  &   4.314 \\
+         18 &    160       & 10 &  11.90  &  60.58  &  17.14  \\
+         18 &    320       & 10 &  61.66  & 227.7   & 111.4   \\
+\midrule
+         24 &     10       & 10 &   1.197 &   2.383 &   0.3904\\
+         24 &     20       & 10 &   1.276 &   2.869 &   0.4769\\
+         24 &     40       & 10 &   1.698 &   4.475 &   1.151 \\
+         24 &     80       & 10 &   3.363 &  13.35  &   3.263 \\
+         24 &    160       & 10 &   8.840 &  45.48  &  13.10  \\
+         24 &    320       & 10 &  46.18  & 171.7   &  84.59  \\
+\bottomrule
+\end{tabular}
+\caption{Linear-regression execution times}
+\label{fig:regression}
+\end{figure*}
 
 \subsection{Using MADlib}
 
@@ -684,94 +870,6 @@ Typical User Workflow \todo{(needs to be substantiated)}:
 	\item Model hypothesis
 	\item ...
 \end{itemize}
-
-
-      \subsection{MADlib Performance}
-\begin{verbatim}
-      Linear Regression
-      OS: Red Hat Enterprise Linux Server release 5.5 (Tikanga)
-      GPDB: 4.1.1.3 build 4, 10 segments without mirrors in each machine.
-      GCC version for GPDB: 4.4.2, Flags: -O3
-      This is what I find on my Linux VM. Huanming, could you check that? I don't have permission to access your Greenplum binaries on gpdb1
-\end{verbatim}
-
-\begin{figure*}
-\centering
-\begin{tabular}{c|r|r||c|c|c|c|}
-\hline
-         \# segments &     \# variables   &  \# rows     & armadillo     & eigen &     internal&     internal mregr\_coef only\\
-\hline
-%                                  
-          10&     10&    10,000 &    0.076 &    0.082 &    0.063\\
-          10&     10&    100,000&    0.156&    0.145&    0.078\\
-          10  &   10&    1,000,000&    0.833&    0.748&    0.224\\
-          10  &   10&    10,000,000&    7.669&    6.857&    1.65\\
-          10  &   10&    100,000,000&    75.245&    67.968&    16.425\\
-\hline
-\hline
-          10 &    100&     10,000&     0.174 &     0.148 &     0.292 &     0.105\\
-          10 &    100&     100,000&     0.722 &    0.289  &   0.908  &   0.275\\
-          10 &    100&     1,000,000&     6.474 &     2.115 &     7.541 &    1.957\\
-          10 &    100&     10,000,000&     63.681 &     20.568 &     74.581 &     18.501\\
-          10 &    100&     100,000,000 &    637.064 &     323.166 &     720.642 &    362.682\\ 
-\hline 
-\hline 
-          10 &     100 &    10,000 &     0.148  &   0.107 &     0.241\\
-          10 &    200  &   10,000  &   0.419   &  0.228  &   1.136\\
-          10 &    400  &   10,000  &   1.7    & 1.04   &  9.603\\
-          10 &    800  &   10,000  &   12.305 &     10.723 &    79.026\\
-          10 &    1600 &     10,000 &    84.757 &     76.441 &     583.917\\
-\hline 
-\hline 
-          10 &    10 &    100,000,000 &     72.58  &   70.36 &    16.119\\
-          20 &    10 &    100,000,000 &    37.065  &   34.331 &    8.195\\
-          30 &    10 &    100,000,000 &    24.612  &   22.95   &  5.642\\
-          40 &    10 &    100,000,000 &     18.709 &     17.392 &    4.412\\
-\hline 
-\end{tabular}
-\caption{Linear Regression.       MADlib: "armadillo" refers to MADlib 0.2.1beta. "eigen" refers to this development branch, which was (other than MADlib 0.2.1beta) compiled with gcc 4.6.2 and flags -O3).
-      GCC version for MADlib 0.2.1beta: 4.1.2, Flags: -O2 -g}
-\end{figure*}
-
-
-      \subsection{A Taste of MADlib in Action}
-
-      A few examples from the docs to give a flavor.  E.g. using
-      k-means clustering:
-
-\begin{alltt}
-      sql> select MADlib.kmeans('data', 10, 1, 'testrun', 'MADlib');
-
-      INFO: Started kmeans with parameters:
-      INFO:  * k = 10 (number of centroids)
-      INFO:  * input_table = madlib.data
-      INFO:  * goodness = 1 (GOF test on)
-      INFO:  * run_id = testrun
-      INFO:  * output_schema = madlib
-      INFO: Seeding 10 centroids...
-      INFO: Using full set for analysis... (100 points)
-      INFO: ...Iteration 1
-      INFO: ...Iteration 2
-      INFO: Exit reason: fraction of reassigned nodes is smaller than the limit: 0.001
-      INFO: Expanding cluster assignment to all points...
-      INFO: Calculating goodness of fit...
-                                 kmeans                            
-      --------------------------------------------------------------
-                                                                   
-      K-Means Clustering has completed.                            
-      Parameters:                                                  
-       - k = 10 (number of centroids)                              
-       - input_table = "madlib"."data"                             
-       - goodness = 1 (GOF test on/off)                            
-       - run_id = testrun                                          
-       - output_schema = madlib                                    
-      Results:                                                     
-       - analysis based on full data set (100 points)              
-       - generated 10 centroids (goodness of fit = 0.114197024061)
-       - table: "madlib"."kmeans_out_centroids_testrun"            
-       - table: "madlib"."kmeans_out_points_testrun"               
-      Time elapsed: 0 minutes 0.947630 seconds.
-\end{alltt}
 
 \section{Related Work: Ecosystem of Scalable Analytics}
       Traditional analysts bring data to the code: see the SAS \textit{SEMMA}
