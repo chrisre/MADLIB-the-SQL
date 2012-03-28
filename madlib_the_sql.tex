@@ -161,7 +161,7 @@ by encouraging careful and comprehensive database design, and by following exact
 Attitudes toward large databases have been changing quickly in the
 past decade, as the focus of large database usage has shifted from
 accountancy to analytics.  The need for correct accounting and data
-warehousing practice has not gone away, but it is a becoming a
+warehousing practice has not gone away, but it is becoming a
 shrinking fraction of the volume---and the value---of large-scale data
 management.  The emerging trend focuses on the use of a wide range of
 potentially noisy data to support predictive analytics, managed by
@@ -244,7 +244,7 @@ ports to new platforms.
     Support Modules
           & Sparse Vectors\\
           & Array Operations\\
-          & Conjugate Gradiant Optimization \\\hline
+          & Conjugate Gradient Optimization \\\hline
   \end{tabular}
 \caption{Current MADlib methods.  (We may want to rate these with markers for maturity.  Also have to decide what to include here from UW and UF.)}
 \label{tab:methods}
@@ -442,7 +442,7 @@ for QA support on additional database engines).
 The core of traditional SQL---\texttt{SELECT...} \texttt{FROM...} \texttt{WHERE}... \texttt{GROUP BY}---is
 quite a powerful harness for orchestrating bulk data processing across
 one or many processors and disks.  It is also a portable, native
-language supported by range of widely-deployed open source and
+language supported by a range of widely-deployed open source and
 commercial database engines.  This makes SQL an attractive
 framework for writing data-intensive programs.  Ideally, we would like
 MADlib methods to be written entirely in straightforward and portable
@@ -505,8 +505,8 @@ as a Python library that ships with MADlib.
 \subsubsection{Driver Functions}
 
 A second problem is the prevalence of iterative algorithms for many
-methods in statistics, particularly optimization methods like Gradiant
-Descent and Monte Carlo simulation in which the number of iterations
+methods in statistics, particularly optimization methods like Gradient
+Descent and Markov Chain Monte Carlo simulation in which the number of iterations
 is determined by a data-dependent stopping condition at the end of
 each round.  There are multiple SQL-based workarounds for this
 problem, which depend on the context.  In order to drive a fixed number $n$ of independent
@@ -609,7 +609,7 @@ The second aspect of the C++ abstraction layer is to provide a safe and robust s
 
 Finally, by incorporating proven third-party libraries, the C++ abstraction layer makes it easy for MADlib developers to write correct and performant code.  For example, the Eigen linear-algebra library contains well-tested and well-tuned code that makes use of the SIMD instruction sets (like SSE) found in today's CPUs. Likewise, provisions for efficient value marshalling have been made. 
 % Some examples include: All type bridges are aware of mutable and immutable objects and avoid making copies whenever possible. DBMS-catalogue lookups are minimized by caching.  
-By virtue of being a template library, the runtime and abstraction overhead is reduced to a minimum, etc. \fs{Can be misunderstood. The last two sentences refer to the C++AL not Eigen.}
+By virtue of being a template library, the runtime and abstraction overhead is reduced to a minimum. \fs{Can be misunderstood. The last two sentences refer to the C++AL not Eigen.}
 
 As an illustration of the high-level code one can write over our abstraction layer, Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final} show reduced, but fully functional code snippets that implement multiple linear regression (as discussed further in Section~\ref{sec:regression}).
 
@@ -619,7 +619,7 @@ We have spent significant time tuning the C++ abstraction layer over PostgreSQL 
 To illustrate the above points, we look at three different algorithmic scenarios.  The first is Linear Regression using Ordinary Least Squares (OLS), which is an example of a widely useful, simple single-pass aggregation technique.  The second is binary Logistic Regression, another widely used technique, but one that employs an iterative algorithm.  Finally, we look at $k$-means \fs{changed this from `K-Means' to `$k$-means' because that's what I used everywhere else.} Clustering, an iterative algorithm with large intermediate states spread across machines.
 \subsection{Single-Pass: Ordinary Least Squares} \label{sec:regression}
 
-In ordinary-least-squares (OLS) linear regression the goal is to fit a hyperplane to a set of points, with the objective of minimizing the sum of squared residuals. Formally, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \R$, and our goal is to find the vector $\widehat{\vec b}$ that minimizes $\sum_{i=1}^n (y_i - \langle \widehat{\vec b}, \vec x_i \rangle)^2$. OLS is one of the most fundamental methods in statistics. Typically, each $y_i$ is assumed to be an (independent) noisy measurement of $\langle \vec b, \vec x_i \rangle$, where $\vec b$ is an unknown but fixed vector and the noise is uncorrelated with mean 0 and unknown but fixed variance. Under these assumptions, $\widehat{\vec b}$ is the best linear unbiased estimate of~$\vec b$ (Gauss-Markov). Under additional assumptions (normality, independence), $\widehat{\vec b}$ is also the maximum-likelihood estimate. Letting $X$ denote the matrix whose rows are $\vec x_i^T$, and defining $\vec y := (y_1, \dots, y_n)^T$, it is well-known that the sum of squared residuals is minimized by $\widehat{\vec b} = (X^TX)^{-1}X^T \vec y$ (for exposition purposes we assume the full-rank case here, though this is not a requirement for MADlib).
+In ordinary-least-squares (OLS) linear regression the goal is to fit a linear function to a set of points, with the objective of minimizing the sum of squared residuals. Formally, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \R$, and our goal is to find the vector $\widehat{\vec b}$ that minimizes $\sum_{i=1}^n (y_i - \langle \widehat{\vec b}, \vec x_i \rangle)^2$. OLS is one of the most fundamental methods in statistics. Typically, each $y_i$ is assumed to be an (independent) noisy measurement of $\langle \vec b, \vec x_i \rangle$, where $\vec b$ is an unknown but fixed vector and the noise is uncorrelated with mean 0 and unknown but fixed variance. Under these assumptions, $\widehat{\vec b}$ is the best linear unbiased estimate of~$\vec b$ (Gauss-Markov). Under additional assumptions (normality, independence), $\widehat{\vec b}$ is also the maximum-likelihood estimate. Letting $X$ denote the matrix whose rows are $\vec x_i^T$, and defining $\vec y := (y_1, \dots, y_n)^T$, it is well-known that the sum of squared residuals is minimized by $\widehat{\vec b} = (X^TX)^{-1}X^T \vec y$ (for exposition purposes we assume the full-rank case here, though this is not a requirement for MADlib).
 
 It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations \cite{DBLP:conf/nips/ChuKLYBNO06}---in extensible database terms, it can be done with a simple user-defined aggregate. The principal observation is this: $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point.  Summation is associative, so data parallelism virtually comes for free---we can compute the per-segment subsums of the previous expressions locally on each segment, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
 
@@ -692,7 +692,7 @@ condition_no | 169.509326412661
 \end{code}
 
 \subsection{Multi-Pass: (Binary) Logistic Regression}
-In (binary) logistic regression, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \{ 0,1 \}$, and our goal is to find the vector $\widehat{\vec b}$ that maximizes $\prod_{i=1}^n \sigma((-1)^{y_i + 1} \cdot \langle \widehat{\vec b}, \vec x_i \rangle)$. Here, $\sigma(z) = \frac{1}{1+\exp(z)}$ denotes the logistic function. Statistically, this is the maximum-likelihood estimate for an unknown vector $\vec b$ under the assumption that each data point's $y_i$ is a random variate with $\Pr[y_i = 1 \mid \vec x_i] = \sigma( \langle \vec b, \vec x_i \rangle )$ and that all observations are independent.
+In (binary) logistic regression, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \{ 0,1 \}$, and our goal is to find the vector $\widehat{\vec b}$ that maximizes $\prod_{i=1}^n \sigma((-1)^{y_i + 1} \cdot \langle \widehat{\vec b}, \vec x_i \rangle)$. Here, $\sigma(z) = \frac{1}{1+\exp(z)}$ denotes the logistic function. Statistically, this is the maximum-likelihood estimate for an unknown vector $\vec b$ under the assumption that each data point $y_i$ is a random variate with $\Pr[y_i = 1 \mid \vec x_i] = \sigma( \langle \vec b, \vec x_i \rangle )$ and that all observations are independent.
 
 It is well-known that, in general, no closed-formula expression for $\widehat{\vec b}$ exists. Instead, $\widehat{\vec b}$ can be computed as the solution of a convex program via standard iterative methods. Arguably, the most common method is to maximize the logarithm of the likelihood using Newton's method. In the case of logistic regression this reduces to \emph{iteratively reweighted least squares} with iteration rule $\widehat{\vec \beta}_{m+1} = (X^T D X)^{-1} X^T D \vec z_m$. Here $\vec z_m$ is a transformation of $X$ and $\widehat{\vec \beta}_m$.
 
@@ -819,8 +819,8 @@ where $k$ is the number of independent variables, $n$ is the number of observati
 In the example, all data was essentially in the buffer cache, and disk I/O was not a limiting factor. This is quite typical in practice: an analyst often runs a machine-learning algorithm several times with different parameters. Given massive amounts of main memory on each node in the cluster, much of the data should moreover remain in the cache. Finally, the computational cost per row grows at least quadratically, and thus will easily surpass I/O cost for complex models. As we compared various cluster sizes and number of independent variables and the respective execution times for previous versions of MADlib, the lesson we learned is that even though we anticipate non-trivial overhead by the DBMS, careful performance tuning---e.g., by making use of instruction-accurate profiling using Valgrind~\cite{NS07a}---still makes significant differences:
 \begin{itemize}
 	\item Version 0.1alpha is an implementation in C that computes the outer-vector products $\vec x_i \vec x_i^T$ as a simple nested loop.
-	\item Version 0.2.1beta introduced an implementation in C++ that used the the Armadillo \cite{armadillo} linear-algebra library as a frontend for LAPACK/BLAS. It turns out that this version was much slower for two reasons: The BLAS library used was the default one shipped with CentOS 5, which is built from the untuned reference BLAS. Profiling and examining the critial code paths revealed that computing $\vec y^T \vec y$ for a row vector $\vec y$ is about three to four times slower than computing $\vec x \vec x^T$ for a column vector $\vec x$ of the same dimension (and the MADlib implementation unfortunately used to do the former). Interestingly, the same holds for Apple's Accelerate framework on Mac~OS~X, which Apple promises to be a tuned library. The second reason for the speed disadvantage is runtime overhead in the first incarnation of the C++ abstraction layer (mostly due to locking and calls into the PostgreSQL/Greenplum backend).
-	\item Version 0.3 has un updated linear-regression implementation that relies on the Eigen C++ linear-algebra library and takes advantage of the fact the the matrix $X^T X$ is symmetric positive definite. Runtime overhead has been reduced, but some calls into the database backend still need better caching.
+	\item Version 0.2.1beta introduced an implementation in C++ that used the Armadillo \cite{armadillo} linear-algebra library as a frontend for LAPACK/BLAS. It turns out that this version was much slower for two reasons: The BLAS library used was the default one shipped with CentOS 5, which is built from the untuned reference BLAS. Profiling and examining the critial code paths revealed that computing $\vec y^T \vec y$ for a row vector $\vec y$ is about three to four times slower than computing $\vec x \vec x^T$ for a column vector $\vec x$ of the same dimension (and the MADlib implementation unfortunately used to do the former). Interestingly, the same holds for Apple's Accelerate framework on Mac~OS~X, which Apple promises to be a tuned library. The second reason for the speed disadvantage is runtime overhead in the first incarnation of the C++ abstraction layer (mostly due to locking and calls into the PostgreSQL/Greenplum backend).
+	\item Version 0.3 has an updated linear-regression implementation that relies on the Eigen C++ linear-algebra library and takes advantage of the fact that the matrix $X^T X$ is symmetric positive definite. Runtime overhead has been reduced, but some calls into the database backend still need better caching.
 \end{itemize}
 %
 Other noteworthy results during our performance studies included that there are no measurable performance differences between PostgreSQL 9.1.1 (both in single and multi-user mode) and GP 4.1 in running the aggregate function on a single core. Moreover, while testing linear/logistic-regression execution times, single-core performance of even laptop CPUs (like the Core i5 540M) did not differ much from today's server CPUs (like the Xeon family). Typically the differences were even less than what the difference in clock speeds might have suggested.  \jmh{Care to speculate why?}
@@ -976,16 +976,16 @@ implemented in the MADlib Framework, all of which are convex. \fs{I would like a
 In spite of the expressive power of convex optimization, even simple
 algorithms converge at provable rates to the true solution. For
 intuition, examine the archetypical function $f(x) = x^2$ shown in
-Figure~\ref{fig:objs:grads}. The graph of this function is like all
+Figure~\ref{fig:xsquare}. The graph of this function is like all
 convex sets: bowl shaped. To minimize the function, we just need to
 get to the bottom of the bowl. As a result, even greedy schemes that
 decrease the function at each step will converge to an optimal
 solution. \fs{Minor detail: Can we phrase the previous sentence in a mathematically exact way? Of course, just because a monotonically decreasing sequence is bounded from below by some number does not yet imply convergence against that number.} One such popular greedy method is called a gradient
 method. The idea is to find the steepest descent direction. In 1-d,
 this direction is the opposite direction of the derivative; in higher
-dimensions, it's called the gradient of $f$.\footnote{One standard
-  notation for the gradient is $\nabla_x f$~\cite{boyd:cvx}.} Using
-the gradient, we iteratively move toward a solution. This process can
+dimensions, it's called the gradient of $f$.
+% \footnote{One standard notation for the gradient is $\nabla_x f$~\cite{boyd:cvx}.} 
+Using the gradient, we iteratively move toward a solution. This process can
 be described by the following C-like syntax \fs{Rather pseudo-code notation?}:
 \[ x += - \alpha*G(x) \]
 \noindent
@@ -1019,7 +1019,7 @@ we denote $G_i(x)$). The resulting algorithm is then described as:
 \begin{equation}
 x += - \alpha N * G_i(x)   
 \label{eq:incremental}\end{equation}
-This approximation is guaranteed to converge an optimal solution. \fs{We should have the reference here.}
+This approximation is guaranteed to converge to an optimal solution. \fs{We should have the reference here.}
 
  
 \paragraph*{Using the MADlib framework}
@@ -1066,7 +1066,7 @@ to $5.8\times$ faster than the original MADlib implementation.\jmh{Do we need to
 %% approximate they gradient term above: at one extreme is IGD where we
 %% approximate the gradient using a single term, at the other extreme are
 %% traditional batch gradient or conjugate gradient where one computes
-%% the full gradient exactly (conjugate gradiant is provided by MADlib as
+%% the full gradient exactly (conjugate gradient is provided by MADlib as
 %% well). In between, there are methods called {\em mini-batches} that
 %% estimate the gradient using several terms of the function (in contrast
 %% to both incremental gradient, which uses a single term, and batch
@@ -1224,13 +1224,13 @@ most statistical text analysis methods, and it can be an expensive
 operation. To achieve high quality, CRF methods often assign hundreds
 of features to each token in the document. Examples of such features
 include: (1) dictionary features: {\it does this token exist in a
-  provided dictionaries?}; (2) regex features: {\it does this token
-  match a provided regular expressions?}; (3) edge features: {\it is
+  provided dictionary?}; (2) regex features: {\it does this token
+  match a provided regular expression?}; (3) edge features: {\it is
   the label of a token correlated with the label of a previous
   token?}; (4) word features: {\it does this the token appear in the
-  training data?}; and (5) position features: {\it is this token is the
+  training data?}; and (5) position features: {\it is this token the
   first or last in the token sequence?}. The right combination of
-features depends on the application, and so our supporting for feature
+features depends on the application, and so our support for feature
 extraction heavily leverages the micro-programming interface provided
 by MADlib.
 
