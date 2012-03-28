@@ -13,7 +13,7 @@
 \usepackage{ctable} % Nicer tables, e.g., \toprule
 \usepackage{verbatim} % Also provides the comment environment
 \usepackage{dcolumn} % Decimal point alignment in tables
-\usepackage{color} % for color comments
+\usepackage{xcolor} % for color comments
 
 \makeatletter
 % The vldb style file is an anachronsism. So no need to worry about hacks anyway.
@@ -686,7 +686,7 @@ In (binary) logistic regression, we are given points $(\vec x_1, y_1), \dots, (\
 
 It is well-known that, in general, no closed-formula expression for $\widehat{\vec b}$ exists. Instead, $\widehat{\vec b}$ can be computed as the solution of a convex program via standard iterative methods. Arguably, the most common method is to maximize the logarithm of the likelihood using Newton's method. In the case of logistic regression this reduces to \emph{iteratively reweighted least squares} with iteration rule $\widehat{\vec \beta}_{m+1} = (X^T D X)^{-1} X^T D \vec z_m$. Here $\vec z_m$ is a transformation of $X$ and $\widehat{\vec \beta}_m$.
 
-\subsubsection{MADlib Implementation}
+\subsubsection{MADlib Implementation} \label{sec:log-regression-impl}
 
 Each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop. We therefore implement a driver UDF in Python, as shown in Listing~\ref{fn:log-reg-driver}. MADlib provides the Python function \texttt{runIterativeAlg} that iteratively calls an aggregate function, stores the computed state, and terminates once the stopping criterion has been reached.
 
@@ -762,6 +762,32 @@ Therefore, while we can reduce the number of closest-centroid calculations by on
 
 The pattern of updating temporary state is made a bit more awkward in PostgreSQL due to its legacy of versioned storage. PostgreSQL performs an update by first inserting a new row and then marking the old row as invisible \cite[Section~23.1.2]{postgres:9.1.3}. As a result, for updates that touch many rows it is typically faster to copy the updated data into a new table (i.e., \texttt{CREATE TABLE AS SELECT} and \texttt{DROP TABLE}) rather than issue an \texttt{UPDATE}. These kinds of DBMS-specific  performance tricks may merit encapsulation in an abstraction layer for SQL portability.
 % Our goal is to eventually hide much of the SQL generation in versatile abstraction layers. \fs{That's my goal, but do we really work in that direction?}
+
+\subsection{MADlib in Practice}
+
+\fs{A quick draft about how a customer uses logistic regression. Feel free to remove this again if it feels out of place.}
+A primary design objective in MADlib is to provide modular components that can easily be used as building blocks for new algorithms like, e.g., ensemble or multi-stage learning. While we intend to include simplified interfaces for important special use cases, the most flexible way of using MADlib is always via its core ``textbook'' interfaces. Practitioners are therefore employing the same techniques used in the design of MADlib itself: Using templated SQL and interrogating the database catalog. Suppose, e.g., we want to do a logistic regression on a table called \texttt{crime} that has a large number of columns, and we intend to experiment which columns to include in our analysis. The MADlib logistic-regression function, as seen in Section~\ref{sec:log-regression-impl}, expects a vector/array column as argument. The database catalog is the natural means of automating the mapping between column names and array indices. This can be expressed in standard SQL using the \texttt{information\_schema}, but PostgreSQL's native catalog provides an even more succinct way to access table meta data: Extracting all column names---and initializing them as included in the regression---could be done as follows:
+%
+\begin{sqlcode*}{gobble=8}
+	CREATE TABLE crime_columns AS
+	SELECT attnum, attname::TEXT, TRUE AS selected
+	FROM pg_attribute
+	WHERE attnum > 0 AND attrelid = 'crime'::regclass;
+\end{sqlcode*}
+%
+Now select or deselecting columns can be done in standard ways, if desired also with a GUI tool. From there, it is a simple step to generate SQL using array and string functions prevalent in DBMSs. Thus, we could call MADlib's logistic regression as follows (PostgreSQL syntax again):
+%
+\begin{sqlcode*}{gobble=8}
+	SELECT * FROM logregr(
+	    'crime',
+	    'crimerat >= 110',
+	    'ARRAY[1, ' || array_to_string( (
+	        SELECT array_agg(ivar ORDER BY pos)
+	        FROM crime_columns
+	    ), ', ') || ']');
+\end{sqlcode*}
+%
+We remark that the dependent variable here is the boolean condition \texttt{(crimerat >= 110)}, and we include a constant 1 among the independent variables to determine the intercept in the logistic regression.
 
 \subsection{Initial Performance Results}
 In its current beta version, MADlib has been tuned a fair bit over PostgreSQL and Greenplum, though much remains to be done.  Here we report on some results for a basic scenario that exercises our core functionality, including the C++ abstraction layer, our ability to call out to linear algebra packages, and parallel speedup results. 
