@@ -5,11 +5,11 @@
 % Fixed the equation on page 3 to prevent line overflow. (AhmetSacan, Sep2012)
 
 \documentclass{vldb}
+\usepackage{etex} % Otherwise we might run into problems of the form "No room for a new \dimen"
 \usepackage{times}
 \usepackage{graphicx}
-\usepackage{balance}  % for  \balance command ON LASMAD PAGE  (only there!)
+%\usepackage{balance}  % for  \balance command ON LASMAD PAGE  (only there!)
 \usepackage{alltt,algo}
-\usepackage{url}
 \usepackage{ctable} % Nicer tables, e.g., \toprule
 \usepackage{verbatim} % Also provides the comment environment
 \usepackage{dcolumn} % Decimal point alignment in tables
@@ -19,54 +19,79 @@
 	pdfauthor={}
 ]{hyperref}
 \usepackage{pgfplotstable} % Generating pretty-printed tables and plots
+\usepackage[protrusion=true,expansion=true]{microtype}
+% "txfonts" is apparently needed to fixup the formatting of lstlistings
+\usepackage{txfonts}
+\usepackage{paralist}
+\usepackage{listings}
+\lstset{
+basicstyle=\ttfamily\scriptsize,       % the size of the fonts that are used for the code
+numbers=left,                   % where to put the line-numbers
+numberstyle=\ttfamily,      % the size of the fonts that are used for the line-numbers
+%aboveskip=0pt,
+%belowskip=0pt,
+stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
+%numbersep=10pt,                  % how far the line-numbers are from the code
+breakindent=0pt,
+firstnumber=1,
+%backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+frame=leftline,
+tabsize=2,  		% sets default tabsize to 2 spaces
+captionpos=b,   		% sets the caption-position to bottom
+breaklines=false,    	% sets automatic line breaking
+breakatwhitespace=true,    % sets if automatic breaks should only happen at whitespace
+%escapeinside={\%}{)}          % if you want to add a comment within your code
+columns=fixed,
+basewidth=0.52em,
+% are you fucking kidding me lstlistings?  who puts the line numbers outside the margin?
+xleftmargin=6mm,
+xrightmargin=-6mm,
+numberblanklines=false,
+language=C++,
+morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,morph,monotone,lset,lbool,lmax,lmap}
+}
+% \lstset{escapeinside={(*}{*)}}
 
 \makeatletter
-% The vldb style file is an anachronsism. So no need to worry about hacks anyway.
-% We redefined the listing environment by package minted here. (If we did not,
-% we would also get an error because \aboveparskip is undefined.)
-% Copied from vldb.csl
-\@ifundefined{code}{\newcounter {code}} % this is for LaTeX2e
-
-\def\fps@code{tbp}
-\def\ftype@code{1}
-\def\ext@code{lof}
-\def\fnum@code{Listing \thecode}
-\def\code{\@float{code}}
-\let\endcode\end@float
-\@namedef{code*}{\@dblfloat{code}}
-\@namedef{endcode*}{\end@dblfloat}
-\makeatother
-
-\usepackage{minted}
-
-% BEGIN Layout
-	\newcommand{\otoprule}{\midrule[\heavyrulewidth]}
-	
-	\newcolumntype{+}{>{\global\let\currentrowstyle\relax}}
-	\newcolumntype{^}{>{\currentrowstyle}}
-	\newcommand{\rowstyle}[1]{\gdef\currentrowstyle{#1}%
-		#1\ignorespaces
-	}
-% END Layout
+% % The vldb style file is an anachronsism. So no need to worry about hacks anyway.
+% % We redefined the listing environment by package minted here. (If we did not,
+% % we would also get an error because \aboveparskip is undefined.)
+% % Copied from vldb.csl
+% \@ifundefined{code}{\newcounter {code}} % this is for LaTeX2e
+% 
+% \def\fps@code{tbp}
+% \def\ftype@code{1}
+% \def\ext@code{lof}
+% \def\fnum@code{Listing \thecode}
+% \def\code{\@float{code}}
+% \let\endcode\end@float
+% \@namedef{code*}{\@dblfloat{code}}
+% \@namedef{endcode*}{\end@dblfloat}
+% \makeatother
+% 
+% \usepackage{minted}
 
 % BEGIN Convenience commands
-	% BEGIN Listing environments
-	\newminted{cpp}{mathescape,
-					linenos,
-					numbersep=5pt,
-					fontsize=\scriptsize,
-					framesep=2mm}
-	\newminted{python}{mathescape,
-					  linenos,
-					  numbersep=5pt,
-					  fontsize=\scriptsize,
-					  framesep=2mm}
-	\newminted{sql}{mathescape,
-					numbersep=5pt,
-					tabsize=4,
-					fontsize=\scriptsize,
-					framesep=2mm}
-	% END Listing environments
+  % % BEGIN Listing environments
+  % \newminted{cpp}{mathescape,
+  %         linenos,
+  %         numbersep=5pt,
+  %         fontsize=\scriptsize,
+  %         framesep=2mm}
+  % \newminted{python}{mathescape,
+  %           linenos,
+  %           numbersep=5pt,
+  %           fontsize=\scriptsize,
+  %           framesep=2mm}
+  % \newminted{sql}{mathescape,
+  %         numbersep=5pt,
+  %         tabsize=4,
+  %         fontsize=\scriptsize,
+  %         framesep=2mm}
+  % % END Listing environments
 	% BEGIN COMMENTS
   \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
   \newcommand{\fs}[1]{{\textcolor{orange}{#1 -- fs}}}
@@ -654,60 +679,70 @@ It has been observed before that computing $\widehat{\vec b}$ lends itself well 
 \subsubsection{MADlib Implementation}
 We assume that data points are stored as \texttt{(x DOUBLE PRECISION[], y DOUBLE PRECISION)} tuples. Linear regression is then implemented as a user-defined aggregate with a transition and final function roughly as in Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final}, respectively. Specifically, we have omitted finiteness checks and several output statistics in the code example. \jmh{can you be specific about what got left out of the listings?} \fs{Done.} The merge function, which is not shown, just adds all values in the transition states together.
 
-\begin{Verbatim}[commandchars=\\\{\}, ,numbersep=5pt,tabsize=4,fontsize=\scriptsize ,framesep=2mm]
-psql# \PY{k}{SELECT} \PY{p}{(}\PY{n}{linregr}\PY{p}{(}\PY{n}{y}\PY{p}{,} \PY{n}{x}\PY{p}{)}\PY{p}{)}\PY{p}{.}\PY{o}{*} \PY{k}{FROM} \PY{n}{data}\PY{p}{;}
+\begin{scriptsize}
+\begin{verbatim}
+psql# SELECT (linregr(y, x)).* FROM data;
 -[ RECORD 1 ]+--------------------------------------------
-coef         | \{1.73071268159411,2.24279312002405\}
+coef         | {1.73071268159411,2.24279312002405}
 r2           | 0.947520042268114
-std_err      | \{0.325768074771675,0.0533185970021179\}
-t_stats      | \{5.31271421488165,42.0639935430964\}
-p_values     | \{6.76812299982288e-07,4.44089209850063e-16\}
+std_err      | {0.325768074771675,0.0533185970021179}
+t_stats      | {5.31271421488165,42.0639935430964}
+p_values     | {6.76812299982288e-07,4.44089209850063e-16}
 condition_no | 169.509326412661
-\end{Verbatim}
+\end{verbatim}
+\end{scriptsize}
 \jmh{That's some pretty non-relational looking output.  Shall we explain?} \fs{Do you mean explaining that logregr returns a composite type?}  \ksn{Please reduce the precision of the floating point numbers to something sensible.}
 
 \jmh{In Listings 1 \& 2, we need either comments inline or a longer caption to explain what's there.  Specifically, explain the casts and templates, and note the invocation of Eigen routines (matrix multiple, transposition, pseudo-inverse).  I can guess at that, but you'll have to clarify.}
 
-\begin{code}
-	\begin{cppcode}
+\begin{figure}[t]
+\begin{scriptsize}
+  % \begin{code}
+  %   \begin{cppcode}
+  \begin{lstlisting}
 AnyType
 linregr_transition::run(AnyType &args) {
     // Transition state is a class that wraps an array.
     // We expect a mutable array. If DBMS allows
     // modifications, copying will be avoided.
     LinRegrTransitionState<
-        MutableArrayHandle<double> > state = args[0];
+      MutableArrayHandle<double> > state = args[0];
     // Dependent variable is a double-precision float
     double y = args[1].getAs<double>();
     // Vector of independent variables wraps an immutable
     // array (again, no unnecessary copying). This maps
     // to an Eigen type
     HandleMap<const ColumnVector> x
-        = args[2].getAs<ArrayHandle<double> >();
+      = args[2].getAs<ArrayHandle<double> >();
     
     if (state.numRows == 0)
-        // The first row determines the number of
-        // independent variables
-        state.initialize(*this, x.size());
+      // The first row determines the number 
+      // of independent variables
+      state.initialize(*this, x.size());
     state.numRows++;
-    state.y_sum += y;
-    state.y_square_sum += y * y;
+    state.y\_sum += y;
+    state.y\_square\_sum += y * y;
     // noalias informs Eigen to multiply in-place
-    state.X_transp_Y.noalias() += x * y;
+    state.X\_transp\_Y.noalias() += x * y;
     // Since $X^TX$ is symmetric, we only need to
     // compute a triangular part
-    triangularView<Lower>(state.X_transp_X)
-        += x * trans(x);
+    triangularView<Lower>(state.X\_transp\_X)
+      += x * trans(x);
     
     return state;
 }
-	\end{cppcode}
+  \end{lstlisting}
+%	\end{cppcode}
 	\caption{Linear-regression transition function}
 	\label{fn:lin-reg-trans}
-\end{code}
+% \end{code}
+\end{scriptsize}
+\end{figure}
 
-\begin{code}
-	\begin{cppcode}
+\begin{figure}[t]
+\begin{scriptsize}
+% \begin{code}
+  \begin{lstlisting}
 AnyType
 linregr_final::run(AnyType &args) {
     // Immutable array: Array will never be copied
@@ -717,28 +752,31 @@ linregr_final::run(AnyType &args) {
     // The following is a MADlib class that wraps Eigen's
     // solver for self-adjoint matrices.
     SymmetricPositiveDefiniteEigenDecomposition<Matrix>
-        decomposition(state.X_transp_X, EigenvaluesOnly,
+        decomposition(state.X\_transp\_X, EigenvaluesOnly,
             ComputePseudoInverse);
     
-    Matrix inverse_of_X_transp_X
+    Matrix inverse\_of\_X\_transp\_X
         = decomposition.pseudoInverse();
     // Let backend allocate array for coefficients so to
     // avoid copying on return (if supported by DBMS).
     HandleMap<ColumnVector> coef(
         allocateArray<double>(state.widthOfX));
-    coef.noalias() = inverse_of_X_transp_X
-        * state.X_transp_Y;
+    coef.noalias() = inverse\_of\_X\_transp\_X
+        * state.X\_transp\_Y;
 
     // Return a composite value.
     AnyType tuple;
     tuple << coef << decomposition.conditionNo();
     return tuple;
 }
-	\end{cppcode}
+\end{lstlisting}
+%	\end{cppcode}
 	\caption{Linear-regression final function}
 	\label{fn:lin-reg-final}
-\end{code}
-
+	% \end{code}
+	\end{scriptsize}
+	\end{figure}
+	
 \subsection{Multi-Pass: (Binary) Logistic Regression}
 In (binary) logistic regression, we are given points $(\vec x_1, y_1)$, $\dots$, $(\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \{ 0,1 \}$, and our goal is to find the vector $\widehat{\vec b}$ that maximizes $\prod_{i=1}^n \sigma((-1)^{y_i + 1} \cdot \langle \widehat{\vec b}, \vec x_i \rangle)$. Here, $\sigma(z) = \frac{1}{1+\exp(z)}$ denotes the logistic function. Statistically, this is the max\-i\-mum-likelihood estimate for an unknown vector $\vec b$ under the assumption that each $y_i$ is a random variate with $\Pr[y_i = 1 \mid \vec x_i] = \sigma( \langle \vec b, \vec x_i \rangle )$ and that all observations are independent.
 
@@ -751,9 +789,12 @@ It is well-known that, in general, no closed-formula expression for $\widehat{\v
 Each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop. We therefore implement a driver UDF in Python, as shown in Figure~\ref{fig:log-reg-driver}. MADlib provides the Python function \texttt{runIterativeAlg} that iteratively calls an aggregate function, stores the computed state, and terminates once the stopping criterion has been reached.
 
 Unfortunately, implementing logistic regression using a driver function leads to a different interface:
-\begin{sqlcode}
+\begin{scriptsize}
+  \lstset{language=SQL, numbers=none, frame=none}
+\begin{lstlisting}
 SELECT * FROM logregr('y', 'x', 'data');
-\end{sqlcode}
+\end{lstlisting}
+\end{scriptsize}
 A problem with this implementation is obvious: the \texttt{logregr} UDF is not an aggregate function and cannot be used in grouping constructs. This makes doing multiple logistic regressions at once harder than multiple linear regressions.
 
 \fs{I would now remove the rest of the subsubsection. For now, I am leaving the old discussion for reference.}
@@ -766,8 +807,11 @@ In addition, this syntax hides identifiers from the SQL parser. \jmh{I don't kno
 	\label{fig:log-reg_driver}
 \end{figure}
 
-%\begin{code}
-%	\begin{pythoncode}
+% \begin{figure}[t]
+% \begin{scriptsize}
+%   \lstset{language=Python}
+%   % \begin{code}
+%   \begin{lstlisting}
 %return __runIterativeAlg(
 %    stateType = "FLOAT8[]",
 %    initialState = "NULL",
@@ -793,11 +837,13 @@ In addition, this syntax hides identifiers from the SQL parser. \jmh{I don't kno
 %            optimizer = optimizer,
 %            precision = precision),
 %    maxNumIterations = maxNumIterations)
-%	\end{pythoncode}
+%     \end{lstlisting}
+% % \end{pythoncode}
 %	\caption{Logistic regression driver}
 %	\label{fn:log-reg-driver}
-%\end{code}
-
+% % \end{code}
+% \end{scriptsize}
+% \end{figure}
 \subsection{Large-State Iteration: k-Means}
 
 In $k$-means clustering, we are given $n$ points $x_1, \dots, x_n \in \R^d$, and our goal is to position $k$ centroids $c_1, \dots, c_k \in \R^d$ so that the sum of squared distances between each point and its closest centroid is minimized. Formally, we wish to minimize
@@ -825,10 +871,13 @@ In the aggregate transition function, we first compute the centroid that the cur
 Unfortunately, in order to check the convergence criterion that no or only few points got reassigned, we have to do two closest-centroid computations per point and iteration: First, we need to compute the closest centroid in the previous iteration and then the closest one in the current iteration. If we stored the closest points explicitly, we could avoid half of the closest-centroid calculations.
 
 We can store points in a table called \texttt{points}, with the array of centroids as an attribute \texttt{centroids} \fs{`centroids' I actually thought of as parameter for the query. The array of centroids is not a column in the `points' table.}, a \texttt{coords} attribute containing the points' coordinates, and the current \texttt{centroid\_id} for the point as a third attribute.  Then we can define a UDF \texttt{closest\_point(a,b)} that determines the point in array \texttt{a} that is closest to \texttt{b}.  Given such a table, we can make the point-to-centroid assignments explicit using the following SQL:
-\begin{sqlcode}
+\begin{scriptsize}
+  \lstset{language=SQL, numbers=none, frame=none}
+\begin{lstlisting}
 UPDATE points
 SET centroid_id = closest_point(centroids, coords)
-\end{sqlcode}
+\end{lstlisting}
+\end{scriptsize}
 Ideally, we would like to perform the point reassignment and the repositioning with a single pass over the data. Unfortunately, this cannot be expressed in standard SQL.\footnote{While PostgreSQL and Greenplum provide an optional \texttt{RETURNING} clause for \texttt{UPDATE} commands, this returns only one row for each row affected by the \texttt{UPDATE}, and aggregates cannot be used within the \texttt{RETURNING} clause. Moreover, an \texttt{UPDATE ... RETURNING} cannot be used as a subquery.}
 
 Therefore, while we can reduce the number of closest-centroid calculations by one half, PostgreSQL and Greenplum process queries one-by-one (and do not perform cross-statement optimization), so they will need to make two passes over the data per one $k$-means iteration. In general, it depends on the DBMS, the data, the hardware, etc.\ whether explicitly storing points leads to a performance improvement.
@@ -844,25 +893,30 @@ The pattern of updating temporary state is made a bit more awkward in PostgreSQL
 
 A primary design objective in MADlib is to provide modular components that can easily be used as building blocks for new algorithms like, e.g., ensemble or multi-stage learning. While we intend to include simplified interfaces for important special use cases, the most flexible way of using MADlib is always via its core ``textbook'' interfaces. Practitioners are therefore employing the same techniques used in the design of MADlib itself: Using templated SQL and interrogating the database catalog. Suppose, e.g., we want to do a logistic regression on a table called \texttt{crime} that has a large number of columns, and we intend to experiment which columns to include in our analysis. The MADlib logistic-regression function, as seen in Section~\ref{sec:log-regression-impl}, expects a vector/array column as argument. The database catalog is the natural means of automating the mapping between column names and array indices. This can be expressed in standard SQL using the \texttt{information\_schema}, but PostgreSQL's native catalog provides an even more succinct way to access table meta data: Extracting all column names---and initializing them as included in the regression---could be done as follows:
 %
-\begin{sqlcode}
+\begin{scriptsize}
+  \lstset{language=SQL, numbers=none, frame=none}
+  \begin{lstlisting}
 CREATE TABLE crime_columns AS
 SELECT attnum, attname::TEXT, TRUE AS selected
 FROM pg_attribute
 WHERE attnum > 0 AND attrelid = 'crime'::regclass;
-\end{sqlcode}
+\end{lstlisting}
+\end{scriptsize}
 %
 Now select or deselecting columns can be done in standard ways, if desired also with a GUI tool. From there, it is a simple step to generate SQL using array and string functions prevalent in DBMSs. Thus, we could call MADlib's logistic regression as follows (PostgreSQL syntax again):
 %
-\begin{sqlcode}
-SELECT * FROM logregr(
+\begin{scriptsize}
+  \lstset{language=SQL, numbers=none, frame=none}
+  \begin{lstlisting}
+  SELECT * FROM logregr(
     'crime',
     'crimerat >= 110',
     'ARRAY[1, ' || array_to_string( (
         SELECT array_agg(ivar ORDER BY pos)
         FROM crime_columns
     ), ', ') || ']');
-\end{sqlcode}
-%
+    \end{lstlisting}
+    \end{scriptsize}%
 We remark that the dependent variable here is the boolean condition \texttt{(crimerat >= 110)}, and we include a constant 1 among the independent variables to determine the intercept in the logistic regression.
 
 \subsection{Initial Performance Results}
@@ -1178,7 +1232,7 @@ to $5.8\times$ faster than the original MADlib implementation.\jmh{Do we need to
 
 \begin{figure}
 \centering
-\includegraphics[width=3in]{FIGS/x_square}
+\includegraphics[width=2in]{FIGS/x_square}
 \caption{The Archetypical Convex Function $f(x) = x^2$.}
 \label{fig:xsquare}
 \end{figure}
@@ -1201,22 +1255,24 @@ Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) 
 \hline
 \end{tabular}}
 \caption{Models currently Implemented in MADlib using the IGD-based
-  approach\scriptsize In classification and regression methods, given
-  a dataset $\Omega \subseteq \mathbb{R}^{N} \times \mathbb{R}$, we
-  minimize the error of a predictor $x \in \mathbb{R}^N$ on a
-  dataset. Given $(u,v) \in \Omega$, the methods above predict the
-  value of $y$ by the equation $x^Tu$. One can add a regularization
-  term to any regression or classification model, e.g., to combat
-  overfitting. For example, in Lasso, we minimize the square loss
-  against the data subject to an $\ell_1$ regularization.  In
-  recommendation, given a matrix $M \in \mathbb{R}^{n \times m}$
-  observed on a set of entries $\Omega \subseteq [n] \times [m]$, we
-  fit a so called low-rank approximation, i.e., $L \in \mathbb{R}^{n
-    \times k}$ and $R \in \mathbb{R}^{m \times k}$ for $k \ll
-  \min\{m,n\}$ .  The low-rank matrix is regularized by the sums of the
-  squares of its factors.  In Labeling with Conditional Random fields,
-  we maximize the weights associated with features $(F_j)$ in the text
-  predict the labels }
+  approach. 
+  % In classification and regression methods, given
+  % a dataset $\Omega \subseteq \mathbb{R}^{N} \times \mathbb{R}$, we
+  % minimize the error of a predictor $x \in \mathbb{R}^N$ on a
+  % dataset. Given $(u,v) \in \Omega$, the methods above predict the
+  % value of $y$ by the equation $x^Tu$. One can add a regularization
+  % term to any regression or classification model, e.g., to combat
+  % overfitting. For example, in Lasso, we minimize the square loss
+  % against the data subject to an $\ell_1$ regularization.  In
+  % recommendation, given a matrix $M \in \mathbb{R}^{n \times m}$
+  % observed on a set of entries $\Omega \subseteq [n] \times [m]$, we
+  % fit a so called low-rank approximation, i.e., $L \in \mathbb{R}^{n
+  %   \times k}$ and $R \in \mathbb{R}^{m \times k}$ for $k \ll
+  % \min\{m,n\}$ .  The low-rank matrix is regularized by the sums of the
+  % squares of its factors.  In Labeling with Conditional Random fields,
+  % we maximize the weights associated with features $(F_j)$ in the text
+  % predict the labels. 
+  }
 \label{fig:objs:grads}
 \end{figure}
 
@@ -1444,26 +1500,112 @@ implementations, but runs natively in a DBMS close to the data~\cite{daisy1,dais
 %% key-word search and more advanced)
 
 \section{Related Work: Ecosystem of Scalable Analytics}
-\jmh{I think we need a pro-forma related work section that cites various efforts for scalable ML, particularly in open source.}
-      Traditional analysts bring data to the code: see the SAS \textit{SEMMA}
-      approach.  Import/export cycle with SAS, R, etc.  This will
-      always exist, but it will be increasingly less useful.  There
-      are active efforts to scale and parallelize these, but those are
-      still quite limited, and companies like SAS are working hard to
-      partner with approaches from below...
+The space of approaches to marry analytics with data is large and
+seems to be growing rapidly. At a high-level there are two approaches,
+(1) bring a statistical language to a data processing substrate, or
+(2) provide a framework to express statistical techniques on top of a
+data processing substrae. Specifically, we split the approaches to
+achieve this marriage into two groups: (1) {\em top-down approaches}
+begin with a high-level statistical programming language, e.g., R or
+Matlab. The technical goal is to build a parallel data processing
+infrastructure that is able to support running this high-level
+language in parallel. Examples of approach include System ML from
+IBM~\cite{SystemML:Ghoting:2011:SDM:2004686.2005625}, Revolution
+Analytics~\cite{Revolution}, and
+SNOW~\cite{SNOW:Tierney:2009:SPC:1598913.1598918}. (2) We call the
+second group {\em framework-based approaches} whose goal is to provide
+a set of building blocks (individual machine-learning algorithms)
+along with library support for micro- and macro-coordination to write the
+algorithms. Recent examples are Mahout~\cite{Mahout},
+Graphlab~\cite{Graphlab:conf/uai/LowGKBGH10}, and MADlib. One can view
+the work of the 90s of integrating the machine learning toolkits as an
+early framework-based approach.
 
-      The new model of scalable analytics depends on bringing the code
-      to the data in a scalable storage/analysis framework.  So you
-      can structure the space in terms of where the data lives.  Not
-      going to get into \textit{what's better} here -- truth is that there
-      are pros and cons, and many organizations use more than one.
+\paragraph*{Top-Down, Language-based Approaches} 
+Within the approaches of type (1), we again divide the space into
+imperative and declarative approaches. In the imperative approach, an
+analyst takes the responsibility of expressing how to parallelize the
+data access, e.g., SNOW and Parallel R packages provide an
+MPI-interface along with calls for data partitioning within the
+framework of R. In contrast in a declarative approach, the analyst
+declares their analysis problem and it is the responsibility of the
+system to achieve this goal (in analogy with a standard
+RDBMS). Examples of the declarative approach include
+SystemML~\cite{SystemML:Ghoting:2011:SDM:2004686.2005625}, which is an
+effort from IBM to provide an R-like language to specify machine
+learning algorithms. In SystemML, these high-level tasks are then
+compiled down to a Hadoop-based infrastructure. The essence of
+SystemML is its compilation techniques: they view R as a declarative
+language, and the goal of their system is to compile this language
+into an analog of the relational algebra. Similar approaches are taken
+in Revolution Analytics~\cite{Revolution} and Oracle's new parallel R
+offering~\cite{ORE} in that these approaches attempt to automatically
+parallelize code written in R.
 
-      Things are really in flux.  Segments kinda like so:
-      \begin{itemize}
-          \item SQL universe has proprietary {\em data mining} toolkits, many of which date back to the 1990s.  These cost a lot and evolve very slowly.  Cite the Teradata research papers, IBM white book.  MADlib is an effort to raise all boats in this domain.
-          \item HDFS/Hadoop universe is burgeoning.  Mahout is the center of energy for ML algorithms right now. (also System ML?)  Exciting trend there, and while the ML libraries are still quite young, they may evolve quickly.
-          \item A variety of emerging in-memory distributed systems like Graphlab, Vowpal Wabbit, Spark, Pregel/Giraph.  These merit a close look.  Some of them present alternative architectures to traditional dataflow parallelism (e.g. GraphLab, VW).  Others are targeted to problems like graph algorithms that may prove to be weak spots for more general purpose systems (e.g. Graphlab, Pregel/Giraph).
-        \end{itemize}
+\paragraph*{Framework-based Approaches} 
+In framework-based approaches, the goal is to provide the analyst with
+low-level primitives and coordination primitives built on top of a
+data processing substrate. Typically, frame-work based approaches
+offer a template whose goal is to autoamte the common tasks of
+deploying an analytic taks. Framework-based approaches differ in what
+the data-processing substrates. For example, MADlib is in in this
+category as it provides a library of functions over an RDBMS. The
+macro- and micro-coordination described earlier are examples of design
+templates. Apache Mahout~\cite{Mahout} goal is to provide an
+open-source machine learning library over Apache Hadoop. Currently,
+Mahoutq provides a library of machine learning algorithms and a
+template to extend this library. At a lower level, the DryadLINQ large
+vector library provides the necessary data types to build analysis
+tasks (e.g., vectors) that are commonly used by machine learning
+techniques. GraphLab is a framework to simplify the design of
+programming parallel machine learning tasks. The core computational
+abstraction is a graph of processing nodes that allows one to define
+asynchronous updates. Graphlab initially focused on providing a
+framework for easy access to multicore
+parallelism~\cite{Graphlab:conf/uai/LowGKBGH10}. However, the core
+computational abstraction is general and is now also deployed in a
+cluster setting. A related approach to simplify writing
+high-performance main-memory systems is
+SPARK~\cite{Zaharia:EECS-2011-82}. SPARK provides access to the
+main-memory of a cluster of machines while providing fault tolerance
+issues using the concept of {\em resilient distributed datasets},
+which are read-only collections of data that can be partitioned across
+a dataset. SPARK blurs the distinction between the framework and
+language-based approaches as it is integrated into a general purpose
+programming language (Scala). Another popular toolkit in this space is
+Vowpal Wabbit~\cite{vw} that is extensively used in the academic
+machine learning community and contains cutting edge techniques for
+high performance.
+
+\paragraph*{Other Data Processing Systems}
+There are a host of data processing techniques that can be used to
+solve elements of the underlying data analysis problem. For example,
+Pregel \cite{Pregel:Malewicz:2010:PSL:1807167.1807184} from Google is
+designed for data analysis over graphs.  In Pregel, the abstraction is
+to write ones code using a graph-based abstraction: each function can
+be viewed as a node that sends and receives messages to its neighbors
+in the graph. Pregel distributes the computation and provides fault
+tolerance.
+% \jmh{I think we need a pro-forma related work section that cites various efforts for scalable ML, particularly in open source.}
+%       Traditional analysts bring data to the code: see the SAS \textit{SEMMA}
+%       approach.  Import/export cycle with SAS, R, etc.  This will
+%       always exist, but it will be increasingly less useful.  There
+%       are active efforts to scale and parallelize these, but those are
+%       still quite limited, and companies like SAS are working hard to
+%       partner with approaches from below...
+% 
+%       The new model of scalable analytics depends on bringing the code
+%       to the data in a scalable storage/analysis framework.  So you
+%       can structure the space in terms of where the data lives.  Not
+%       going to get into \textit{what's better} here -- truth is that there
+%       are pros and cons, and many organizations use more than one.
+% 
+%       Things are really in flux.  Segments kinda like so:
+%       \begin{itemize}
+%           \item SQL universe has proprietary {\em data mining} toolkits, many of which date back to the 1990s.  These cost a lot and evolve very slowly.  Cite the Teradata research papers, IBM white book.  MADlib is an effort to raise all boats in this domain.
+%           \item HDFS/Hadoop universe is burgeoning.  Mahout is the center of energy for ML algorithms right now. (also System ML?)  Exciting trend there, and while the ML libraries are still quite young, they may evolve quickly.
+%           \item A variety of emerging in-memory distributed systems like Graphlab, Vowpal Wabbit, Spark, Pregel/Giraph.  These merit a close look.  Some of them present alternative architectures to traditional dataflow parallelism (e.g. GraphLab, VW).  Others are targeted to problems like graph algorithms that may prove to be weak spots for more general purpose systems (e.g. Graphlab, Pregel/Giraph).
+%         \end{itemize}
 
 
 
@@ -1496,6 +1638,7 @@ Future plans:
 
 
 {\small \bibliographystyle{abbrv}
-  \bibliography{chris.local.wopages} }
+  \bibliography{chris.local.wopages}
+  \bibliography{WriteupRelWork} }
 
 \end{document}
