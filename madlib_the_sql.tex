@@ -87,6 +87,7 @@
 	\renewcommand{\vec}[1]{\ensuremath{\boldsymbol{#1}}}
 % END Mathematical Definitions
 
+\graphicspath{{FIGS/}}
 
 
 \begin{document}
@@ -544,7 +545,7 @@ parallelize and hence pulls all data to a single node.  We avoid this
 via a design pattern in which the driver UDF kicks off each iteration
 and stages its output into a temporary table via \texttt{CREATE TEMP TABLE...
 AS SELECT...} It then interrogates the resulting temp table using small
-aggregate queries as needed.  \jmh{Forward ref to an example in this paper?} \fs{We could reference Section~\ref{sec:log-regression-impl} or Listing~\ref{fn:log-reg-driver}} As a result, all large-data movement is
+aggregate queries as needed.  \jmh{Forward ref to an example in this paper?} \fs{We could reference Section~\ref{sec:log-regression-impl} or Figure~\ref{fig:log-reg-driver}} As a result, all large-data movement is
 done within the database engine and its buffer pool.
 Database engines typically provide efficient parallelism as well as
 buffering and spill files on disk for large temp tables, so this
@@ -574,7 +575,7 @@ problems of data types and casting, but cannot help with the variable
 arity of inputs and outputs.  To address this issue, we use Python
 UDFs to interrogate the database catalog for details of input tables,
 and then synthesize customized SQL queries based on templates to
-produce outputs.  {\bf Figure~\ref{fig:secondorder} shows Python code that illustrates this.} \fs{I assume profile is the only Python module dealing with variable arity. The DT code is not Python unfortunately. Listing~\ref{fn:log-reg-driver} gives an example of templated SQL, but not variable arity.} This pattern is currently done in an ad hoc way in
+produce outputs.  {\bf Figure~\ref{fig:secondorder} shows Python code that illustrates this.} \fs{I assume profile is the only Python module dealing with variable arity. The DT code is not Python unfortunately. Figure~\ref{fig:log-reg-driver} gives an example of templated SQL, but not variable arity.} This pattern is currently done in an ad hoc way in
 each method that needs it.  In the future we plan to support this pattern
 as a Python library that ships with MADlib. Similarly, the lack of native support for higher-order functions in SQL again necessitates templated SQL or a technical solution as discussed in Section~\ref{sec:C++AL}.
 
@@ -751,7 +752,7 @@ It is well-known that, in general, no closed-formula expression for $\widehat{\v
 
 \jmh{I think the logistic regression section will need work from you, to help the user understand how the SQL statement invokes the Python driver, and how the Python driver in turn invokes each iteration in SQL.  Clarifying that control flow will help a lot more than Listing 3, so if a picture is in order feel free to replace Listing 3.  (BTW feel free to upload a photo of a pencil drawing for now, we can clean it up tomorrow).  Alternatively, be sure to add comments or caption to Listing 3 so it's understandable.}
 
-Each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop. We therefore implement a driver UDF in Python, as shown in Listing~\ref{fn:log-reg-driver}. MADlib provides the Python function \texttt{runIterativeAlg} that iteratively calls an aggregate function, stores the computed state, and terminates once the stopping criterion has been reached.
+Each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop. We therefore implement a driver UDF in Python, as shown in Figure~\ref{fig:log-reg-driver}. MADlib provides the Python function \texttt{runIterativeAlg} that iteratively calls an aggregate function, stores the computed state, and terminates once the stopping criterion has been reached.
 
 Unfortunately, implementing logistic regression using a driver function leads to a different interface:
 \begin{sqlcode}
@@ -763,37 +764,43 @@ A problem with this implementation is obvious: the \texttt{logregr} UDF is not a
 In addition, this syntax hides identifiers from the SQL parser. \jmh{I don't know what that means.} \fs{My main point is that identifiers passed as strings only become visible to the DBMS when the generated SQL is executed. However, we then should not rely on the SQL parser any more to give reasonable error messages. Waiting for the generated SQL to fail will usually lead to error messages that are enigmatic to the user.} Instead, MADlib is burdened with the responsibility of name binding, including all needed validation and error handling. \jmh{When we say MADlib, we main the logistic regression code.  Yes?  What's the lesson here?  Iterative methods cannot be aggs? Or they can but we failed to think about them properly?} \fs{``Multi-pass'' aggregates would indeed be very useful from a MADlib perspective and enhance the user experience. -- That said, I'll the whole paragraph should be rephrased. See also KeeSiong's comment.}  Also, any errors will only be detected at runtime.
 \ksn{The discussion ends with too much gloom. Are we not going to propose some solution moving forward? Or does this go down as one of the fundamental limitations of implementing things in SQL?}
 
-\begin{code}
-	\begin{pythoncode}
-return __runIterativeAlg(
-    stateType = "FLOAT8[]",
-    initialState = "NULL",
-    source = source,
-    updateExpr = """
-        {MADlibSchema}.logregr_{optimizer}_step(
-            ({depColumn})::BOOLEAN,
-            ({indepColumn})::FLOAT8[],
-            {{state}}
-        )
-        """.format(
-            MADlibSchema = MADlibSchema,
-            depColumn = depColumn,
-            indepColumn = indepColumn,
-            optimizer = optimizer),
-    terminateExpr = """
-        {MADlibSchema}.
-        internal_logregr_{optimizer}_step_distance(
-            {{newState}}, {{oldState}}
-        ) < {precision}
-        """.format(
-            MADlibSchema = MADlibSchema,
-            optimizer = optimizer,
-            precision = precision),
-    maxNumIterations = maxNumIterations)
-	\end{pythoncode}
-	\caption{Logistic regression driver}
-	\label{fn:log-reg-driver}
-\end{code}
+\begin{figure}
+	\includegraphics[scale=0.5]{LogisticRegression}
+	\caption{Sequence Diagram for Logistic Regression}
+	\label{fig:log-reg_driver}
+\end{figure}
+
+%\begin{code}
+%	\begin{pythoncode}
+%return __runIterativeAlg(
+%    stateType = "FLOAT8[]",
+%    initialState = "NULL",
+%    source = source,
+%    updateExpr = """
+%        {MADlibSchema}.logregr_{optimizer}_step(
+%            ({depColumn})::BOOLEAN,
+%            ({indepColumn})::FLOAT8[],
+%            {{state}}
+%        )
+%        """.format(
+%            MADlibSchema = MADlibSchema,
+%            depColumn = depColumn,
+%            indepColumn = indepColumn,
+%            optimizer = optimizer),
+%    terminateExpr = """
+%        {MADlibSchema}.
+%        internal_logregr_{optimizer}_step_distance(
+%            {{newState}}, {{oldState}}
+%        ) < {precision}
+%        """.format(
+%            MADlibSchema = MADlibSchema,
+%            optimizer = optimizer,
+%            precision = precision),
+%    maxNumIterations = maxNumIterations)
+%	\end{pythoncode}
+%	\caption{Logistic regression driver}
+%	\label{fn:log-reg-driver}
+%\end{code}
 
 \subsection{Large-State Iteration: k-Means}
 
