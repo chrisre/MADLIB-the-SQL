@@ -706,28 +706,28 @@ linregr_transition::run(AnyType &args) {
     // We expect a mutable array. If DBMS allows
     // modifications, copying will be avoided.
     LinRegrTransitionState<
-      MutableArrayHandle<double> > state = args[0];
+        MutableArrayHandle<double> > state = args[0];
     // Dependent variable is a double-precision float
     double y = args[1].getAs<double>();
     // Vector of independent variables wraps an immutable
     // array (again, no unnecessary copying). This maps
     // to an Eigen type
     HandleMap<const ColumnVector> x
-      = args[2].getAs<ArrayHandle<double> >();
+        = args[2].getAs<ArrayHandle<double> >();
     
     if (state.numRows == 0)
-      // The first row determines the number 
-      // of independent variables
-      state.initialize(*this, x.size());
+        // The first row determines the number 
+        // of independent variables
+        state.initialize(*this, x.size());
     state.numRows++;
-    state.y\_sum += y;
-    state.y\_square\_sum += y * y;
+    state.y_sum += y;
+    state.y_square_sum += y * y;
     // noalias informs Eigen to multiply in-place
-    state.X\_transp\_Y.noalias() += x * y;
+    state.X_transp_Y.noalias() += x * y;
     // Since $X^TX$ is symmetric, we only need to
     // compute a triangular part
-    triangularView<Lower>(state.X\_transp\_X)
-      += x * trans(x);
+    triangularView<Lower>(state.X_transp_X)
+        += x * trans(x);
     
     return state;
 }
@@ -752,17 +752,17 @@ linregr_final::run(AnyType &args) {
     // The following is a MADlib class that wraps Eigen's
     // solver for self-adjoint matrices.
     SymmetricPositiveDefiniteEigenDecomposition<Matrix>
-        decomposition(state.X\_transp\_X, EigenvaluesOnly,
+        decomposition(state.X_transp_X, EigenvaluesOnly,
             ComputePseudoInverse);
     
-    Matrix inverse\_of\_X\_transp\_X
+    Matrix inverse_of_X_transp_X
         = decomposition.pseudoInverse();
     // Let backend allocate array for coefficients so to
     // avoid copying on return (if supported by DBMS).
     HandleMap<ColumnVector> coef(
         allocateArray<double>(state.widthOfX));
-    coef.noalias() = inverse\_of\_X\_transp\_X
-        * state.X\_transp\_Y;
+    coef.noalias() = inverse_of_X_transp_X
+        * state.X_transp_Y;
 
     // Return a composite value.
     AnyType tuple;
@@ -1043,19 +1043,24 @@ done
 
 \begin{figure}
 \begin{tikzpicture}
-\begin{axis}[height=5cm,width=8cm,xlabel={\# independent variables},ylabel={execution time (s)}]
+\begin{axis}[height=5cm,width=8cm,xlabel={\# independent variables},ylabel={execution time (s)},
+	legend pos=north west]
 	\addplot table[
 		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{6:6}
 	]{Tables/linregr.dat};
+	\addlegendentry{6 Segments}
 	\addplot table[
 		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{12:12}
 	]{Tables/linregr.dat};
+	\addlegendentry{12 Segments}
 	\addplot table[
 		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{18:18}
 	]{Tables/linregr.dat};
+	\addlegendentry{18 Segments}
 	\addplot table[
 		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{24:24}
 	]{Tables/linregr.dat};
+	\addlegendentry{24 Segments}
 \end{axis}
 \end{tikzpicture}
 \caption{Linear-regression execution times using MADlib v0.3 on Greenplum Database 4.2.0, 10 million rows}
