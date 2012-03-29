@@ -5,7 +5,6 @@
 % Fixed the equation on page 3 to prevent line overflow. (AhmetSacan, Sep2012)
 
 \documentclass{vldb}
-\usepackage{etex} % Otherwise we might run into problems of the form "No room for a new \dimen"
 \usepackage{times}
 \usepackage{graphicx}
 %\usepackage{balance}  % for  \balance command ON LASMAD PAGE  (only there!)
@@ -18,7 +17,6 @@
 	pdftitle={Introducing MADlib (MAD Skills, the SQL)},
 	pdfauthor={}
 ]{hyperref}
-\usepackage{pgfplotstable} % Generating pretty-printed tables and plots
 \usepackage[protrusion=true,expansion=true]{microtype}
 % "txfonts" is apparently needed to fixup the formatting of lstlistings
 \usepackage{txfonts}
@@ -73,6 +71,16 @@ morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,mor
 % \makeatother
 % 
 % \usepackage{minted}
+
+% BEGIN Layout
+	\newcommand{\otoprule}{\midrule[\heavyrulewidth]}
+	
+	\newcolumntype{+}{>{\global\let\currentrowstyle\relax}}
+	\newcolumntype{^}{>{\currentrowstyle}}
+	\newcommand{\rowstyle}[1]{\gdef\currentrowstyle{#1}%
+		#1\ignorespaces
+	}
+% END Layout
 
 % BEGIN Convenience commands
   % % BEGIN Listing environments
@@ -1005,64 +1013,53 @@ done
 
 \begin{figure*}
 \centering
-\pgfplotstabletypeset[
-	every nth row={6}{before row=\midrule},
-	columns/segments/.style={
-		column type=r,column name={},
-	},
-	columns/indep/.style={
-		column type=r,column name={},
-	},
-	columns/rows/.style={
-		column type=r,column name={(million)},
-	},
-	columns/v0.3/.style={
-		dcolumn={D{.}{.}{3.3}}{c},column name={(s)},precision=4
-	},
-	columns/v0.2/.style={
-		dcolumn={D{.}{.}{3.3}}{c},column name={(s)},precision=4
-	},
-	columns/v0.1/.style={
-		dcolumn={D{.}{.}{3.4}}{c},column name={(s)},precision=4
-	},
-	every head row/.style={before row={%
-			\toprule
-			\multicolumn{1}{c}{\textbf{\# Segments}} &
-			\multicolumn{1}{c}{\textbf{\# Rows}} &
-			\multicolumn{1}{c}{\textbf{\# Variables}} &
-			\multicolumn{1}{c}{\textbf{v0.3}} &
-			\multicolumn{1}{c}{\textbf{v0.2.1beta}} &
-			\multicolumn{1}{c}{\textbf{v0.1alpha}}
-			\\%
-		}, after row=\midrule},
-	every last row/.style={after row=\bottomrule}
-]{Tables/linregr.dat}
+\begin{tabular}{+r^r^rD{.}{.}{3.3}D{.}{.}{3.3}D{.}{.}{3.4}}
+\toprule\rowstyle{\bfseries}
+\# segments & \# variables & \multicolumn{1}{^c}{\# rows}
+										  & \multicolumn{1}{^c}{v0.3}
+													& \multicolumn{1}{^c}{v0.2.1beta}
+																 & \multicolumn{1}{^c}{v0.1alpha}\\
+			&             & \multicolumn{1}{^c}{(million)}
+										  & \multicolumn{1}{^c}{(s)}
+													& \multicolumn{1}{^c}{(s)}
+																 & \multicolumn{1}{^c}{(s)} \\
+\otoprule
+          6 &     10       & 10 &   4.447 &   9.501 &   1.337 \\
+          6 &     20       & 10 &   4.688 &  11.60  &   1.874 \\
+          6 &     40       & 10 &   6.843 &  17.96  &   3.828 \\
+          6 &     80       & 10 &  13.28  &  52.94  &  12.98  \\
+          6 &    160       & 10 &  35.66  & 181.4   &  51.20  \\
+          6 &    320       & 10 & 186.2   & 683.8   & 333.4   \\
+\midrule
+         12 &     10       & 10 &   2.115 &   4.756 &   0.9600\\
+         12 &     20       & 10 &   2.432 &   5.760 &   1.212 \\
+         12 &     40       & 10 &   3.420 &   9.010 &   2.046 \\
+         12 &     80       & 10 &   6.797 &  26.48  &   6.469 \\
+         12 &    160       & 10 &  17.71  &  90.95  &  25.67  \\
+         12 &    320       & 10 &  92.41  & 341.5   & 166.6   \\
+\midrule
+         18 &     10       & 10 &   1.418 &   3.206 &   0.6197\\
+         18 &     20       & 10 &   1.648 &   3.805 &   1.003 \\
+         18 &     40       & 10 &   2.335 &   5.994 &   1.183 \\
+         18 &     80       & 10 &   4.461 &  17.73  &   4.314 \\
+         18 &    160       & 10 &  11.90  &  60.58  &  17.14  \\
+         18 &    320       & 10 &  61.66  & 227.7   & 111.4   \\
+\midrule
+         24 &     10       & 10 &   1.197 &   2.383 &   0.3904\\
+         24 &     20       & 10 &   1.276 &   2.869 &   0.4769\\
+         24 &     40       & 10 &   1.698 &   4.475 &   1.151 \\
+         24 &     80       & 10 &   3.363 &  13.35  &   3.263 \\
+         24 &    160       & 10 &   8.840 &  45.48  &  13.10  \\
+         24 &    320       & 10 &  46.18  & 171.7   &  84.59  \\
+\bottomrule
+\end{tabular}
 \caption{Linear-regression execution times}
 \label{fig:regression}
 \end{figure*}
 
 \begin{figure}
-\begin{tikzpicture}
-\begin{axis}[height=5cm,width=8cm,xlabel={\# independent variables},ylabel={execution time (s)},
-	legend pos=north west]
-	\addplot table[
-		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{6:6}
-	]{Tables/linregr.dat};
-	\addlegendentry{6 Segments}
-	\addplot table[
-		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{12:12}
-	]{Tables/linregr.dat};
-	\addlegendentry{12 Segments}
-	\addplot table[
-		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{18:18}
-	]{Tables/linregr.dat};
-	\addlegendentry{18 Segments}
-	\addplot table[
-		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{24:24}
-	]{Tables/linregr.dat};
-	\addlegendentry{24 Segments}
-\end{axis}
-\end{tikzpicture}
+\centering
+\includegraphics{linregr-diagram}
 \caption{Linear-regression execution times using MADlib v0.3 on Greenplum Database 4.2.0, 10 million rows}
 \label{fig:regression-diagram}
 \end{figure}

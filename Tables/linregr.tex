@@ -1,0 +1,42 @@
+\documentclass{article}
+\usepackage{ctable} % Nicer tables, e.g., \toprule
+\usepackage{dcolumn} % Decimal point alignment in tables
+\usepackage{pgfplotstable} % Generating pretty-printed tables and plots
+
+\begin{document}
+
+% With recent versions of package pgfplotstable just do:
+\pgfplotstabletypeset[
+	every nth row={6}{before row=\midrule},
+	columns/segments/.style={
+		column type=r,column name={},
+	},
+	columns/indep/.style={
+		column type=r,column name={},
+	},
+	columns/rows/.style={
+		column type=r,column name={(million)},
+	},
+	columns/v0.3/.style={
+		dcolumn={D{.}{.}{3.3}}{c},column name={(s)},precision=4
+	},
+	columns/v0.2/.style={
+		dcolumn={D{.}{.}{3.3}}{c},column name={(s)},precision=4
+	},
+	columns/v0.1/.style={
+		dcolumn={D{.}{.}{3.4}}{c},column name={(s)},precision=4
+	},
+	every head row/.style={before row={%
+			\toprule
+			\multicolumn{1}{c}{\textbf{\# Segments}} &
+			\multicolumn{1}{c}{\textbf{\# Rows}} &
+			\multicolumn{1}{c}{\textbf{\# Variables}} &
+			\multicolumn{1}{c}{\textbf{v0.3}} &
+			\multicolumn{1}{c}{\textbf{v0.2.1beta}} &
+			\multicolumn{1}{c}{\textbf{v0.1alpha}}
+			\\%
+		}, after row=\midrule},
+	every last row/.style={after row=\bottomrule}
+]{linregr.dat}
+
+\end{document}

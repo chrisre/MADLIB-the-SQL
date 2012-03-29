@@ -1,0 +1,35 @@
+\documentclass[10pt]{article}
+\usepackage{times}
+\usepackage{geometry}
+\geometry{
+   paperwidth=8.2cm, paperheight=4.8cm,
+   left=0mm,
+   right=0mm,
+   top=0mm,
+   bottom=0mm
+}
+\usepackage{pgfplotstable} % Generating pretty-printed tables and plots
+
+\begin{document}
+\noindent\small\begin{tikzpicture}
+\begin{axis}[height=5cm,width=8cm,xlabel={\# independent variables},ylabel={execution time (s)},
+	legend pos=north west]
+	\addplot table[
+		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{6:6}
+	]{../Tables/linregr.dat};
+	\addlegendentry{6 Segments}
+	\addplot table[
+		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{12:12}
+	]{../Tables/linregr.dat};
+	\addlegendentry{12 Segments}
+	\addplot table[
+		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{18:18}
+	]{../Tables/linregr.dat};
+	\addlegendentry{18 Segments}
+	\addplot table[
+		x=indep,y=v0.3,restrict expr to domain={\thisrow{segments}}{24:24}
+	]{../Tables/linregr.dat};
+	\addlegendentry{24 Segments}
+\end{axis}
+\end{tikzpicture}
+\end{document}
