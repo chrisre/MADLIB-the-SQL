@@ -265,7 +265,7 @@ library of scalable in-database analytics, much as the CRAN library
 serves the statistics community~\cite{cran}.  Unlike CRAN, which is
 customized to the R analytics engine, we hope that MADlib's grounding
 in standard SQL will lead to community ports to a
-variety of parallel database engines.
+variety of parallel database engines. \fs{True in theory, but we do currently use a lot of PG and GP specific SQL and extensibility. On the SQL layer, few abstraction efforts have been undertaken (essentially just the m4 preprocessor). At this point, we certainly do not have an edge over R in terms of portability. (While I agree that this is what the C++ AL is for, why we are trying to port pgSQL to Python for driver code, etc.)}
 
 In addition to its primary goal, MADlib can serve a number of other
 purposes for the community.  As a standard and relatively mature
@@ -279,7 +279,7 @@ compared for performance.  This latter comparison has been notoriously
 difficult in the past, due to the closed-source, black-box nature of
 ``data mining'' and analytic toolkits that were not only customized to
 specific platforms, but also lacked transparency into their analytic
-algorithms.  
+algorithms.  \fs{While I'd love this to be true, I don't see that MADlib would be more of an apple-to-apples comparison than using existing benchmarks. Performance would again largely depend on the quality of the port, i.e., how well the port adapts to vendor-specific implementations. Currently, we are using lots of PG/GP specific SQL. In fact, much code is unfortunately still written in pgSQL. (I don't like it, but that's how it is.) Not even user-defined aggregates---arguably our most fundamental building block---is standard SQL.}
 
 \subsection{Why Databases?}
 
@@ -292,7 +292,7 @@ For decades, statistical packages like SAS, Matlab and R have been the key tools
 One standard analytics methodology advocated in this domain
 is called SEMMA: Sample, Explore, Modify, Model, Assess. The ``EMMA''
 portion of this cycle identifies a set of fundamental tasks
-that an analyst needs to perform, but the first, ``S'' step makes less and less sense in many settings today.  The costs of computation and storage are increasingly cheap, and entire data sets can often be processed efficiently by a cluster of computers.  Meanwhile, competition for extracting value from data has become increasingly refined.  Consider fiercely competitive application domains like online advertising or politics.  It is of course important to target ``typical'' people (customers, voters) that would be captured by sampling the database.  Because SEMMA is standard practice, optimizing for a sample provides no real competitive advantage.  Winning today requires extracting advantages in the long tail of ``special interests'', a practice known as ``microtargeting'', ``hypertargeting'' or ``narrowcasting''.  In that context, the first step of SEMMA essentially defeats the remaining four steps, leading to simplistic, generalized decision-making that may not translate well to small populations in the tail of the distribution.
+that an analyst needs to perform, but the first, ``S'' step makes less and less sense in many settings today.  The costs of computation and storage are increasingly cheap, and entire data sets can often be processed efficiently by a cluster of computers.  Meanwhile, competition for extracting value from data has become increasingly refined.  Consider fiercely competitive application domains like online advertising or politics.  It is of course important to target ``typical'' people (customers, voters) that would be captured by sampling the database.  Because SEMMA is standard practice, optimizing for a sample provides no real competitive advantage.  Winning today requires extracting advantages in the long tail of ``special interests'', a practice known as ``microtargeting'', ``hypertargeting'' or ``narrowcasting''.  In that context, the first step of SEMMA essentially defeats the remaining four steps, leading to simplistic, generalized decision-making that may not translate well to small populations in the tail of the distribution. \fs{That explains why you do not want to weed out anything \emph{before} storing the data. But what is the reason for doing large-scale machine learning \emph{after} you have identified you microtarget? Concretely: Why prefer logistic regression over 1~billion rows to 1~million rows? If the model is reasonable, shouldn't the difference always be insignificant?}
 % throws away the very
 % competitive advantage that customers hope to get from acquiring their
 % valuable data. Sampling decouples the human intelligence in
@@ -366,14 +366,14 @@ encourage this.  For these cases, it would be helpful to push statistical method
 
 From the beginning, MADlib was designed as an open source project with
 corporate backing, rather than a closed-source corporate effort with
-academic consulting.  This decision was motivated by a number of
+academic consulting. This decision was motivated by a number of
 factors, including the following:
 
 \begin{itemize}
     \item \textbf{The benefits of customization}: Statistical methods are rarely used as turnkey solutions.  As a result, it is common for data scientists to want to modify and adapt canonical models and methods (e.g., regression, classification, clustering) to their own purposes.  This is a very tangible benefit of open source libraries over traditional closed-source packages. Moreover, in an open-source community there is a process and a set of positive incentives for useful modifications to be shared back to the benefit of the entire community.
-    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community adopt and improve their software.  Open-source efforts can also be synergistic for vendors that sell commercial software to customers who run open-source code.  Most IT shops today run a mix of open-source and proprietary software, and it is wise for software vendors to position themselves intelligently in that context.  For many database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.  For these vendors, an open-source library like MADlib is an opportunity to expand their functionality and hence services.
-    \item \textbf{Closing the research-to-adoption loop}:  Very few companies that depend on data analysis have the capacity to develop significant in-house research into computing or data science.  On the other hand, it is hard for academics doing computing research to understand and influence the way that analytic processes are done in the field.  An open source project like MADlib has the potential to connect academic researchers not only to industrial software vendors, but also directly to the end-users of analytics software.  This can improve technology transfer from academia into practice without requiring database software vendors to serve as middlemen.  It can similarly enable end-users in specific application domains to influence the research agenda in academia.
-    \item \textbf{Leveling the playing field, encouraging innovation}:  Over the past two decades, database software vendors have developed proprietary data mining toolkits consisting of textbook algorithms.  It is hard to assess their relative merits.  Meanwhile, other communities in machine learning and internet advertising have also been busily innovating, but their code is typically not well packaged for reuse, and the code that is available was not written to run in a database system.  Meanwhile, none of these projects has demonstrated the vibrancy and breadth we see in the open-source community surrounding R and its CRAN package.  A robust open-source project like MADlib can bring the entire database community up to a baseline level of competence on standard statistical algorithms, remove the corporate \textit{FUD}  from proprietary toolkits that has held back innovation, and help focus a large community on innovation and technology transfer.
+    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community adopt and improve their software.  Open-source efforts can also be synergistic for vendors that sell commercial software to customers who run open-source code.  Most IT shops today run a mix of open-source and proprietary software, and it is wise for software vendors to position themselves intelligently in that context.  For many database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.  For these vendors, an open-source library like MADlib is an opportunity to expand their functionality and hence services. \fs{As a reader I ask ask myself here: Does Greenplum have competency in statistical methods? If so, why do they want to let competitors benefit from that? The argument would be plausible if MADlib was a joint venture, but leaves open questions as a unilateral move by Greenplum.}
+    \item \textbf{Closing the research-to-adoption loop}:  Very few companies that depend on data analysis have the capacity to develop significant in-house research into computing or data science. \fs{Again, one would assume that the Greenplum side of MADlib could not care less if other companies are lacking certain capacities.} On the other hand, it is hard for academics doing computing research to understand and influence the way that analytic processes are done in the field.  An open source project like MADlib has the potential to connect academic researchers not only to industrial software vendors, but also directly to the end-users of analytics software.  This can improve technology transfer from academia into practice without requiring database software vendors to serve as middlemen.  It can similarly enable end-users in specific application domains to influence the research agenda in academia.
+    \item \textbf{Leveling the playing field, encouraging innovation}:  Over the past two decades, database software vendors have developed proprietary data mining toolkits consisting of textbook algorithms.  It is hard to assess their relative merits.  Meanwhile, other communities in machine learning and internet advertising have also been busily innovating, but their code is typically not well packaged for reuse, and the code that is available was not written to run in a database system.  Meanwhile, none of these projects has demonstrated the vibrancy and breadth we see in the open-source community surrounding R and its CRAN package.  A robust open-source project like MADlib \fs{We should find the right mix of self-confidence and at the same time acknowledging that MADlib is still at an early stage and beta in many respects.} can bring the entire database community up to a baseline level of competence on standard statistical algorithms, remove the corporate \textit{FUD}  from proprietary toolkits that has held back innovation, and help focus a large community on innovation and technology transfer.
 \end{itemize}
 
 \subsection{A Model for Open Source Collaboration}
@@ -384,7 +384,7 @@ MADlib is designed in part as an experiment in binding these
 communities more tightly, to face current realities in software
 development.
 
-In previous decades, open-source software famously came from universities and evolved into significant commercial products.  Examples include the Ingres and Postgres database systems, the BSD UNIX and Mach operating systems, the X-windows user interfaces and the Kerberos authentication suite.  These projects were characterized by aggressive application of cutting-edge research ideas, captured in workable but fairly raw public releases that matured slowly with the help of communities outside the university.  While all of the above examples were incorporated into commercial products, many of those efforts emerged years after the initial open-source releases, and often with significant changes.
+In previous decades, open-source software famously came from universities and evolved into significant commercial products.  Examples include the Ingres and Postgres database systems, the BSD UNIX and Mach operating systems, the X-windows \fs{X Window} user interfaces and the Kerberos authentication suite.  These projects were characterized by aggressive application of cutting-edge research ideas, captured in workable but fairly raw public releases that matured slowly with the help of communities outside the university.  While all of the above examples were incorporated into commercial products, many of those efforts emerged years after the initial open-source releases, and often with significant changes.
 
 Today, we expect successful open source projects to be quite mature,
 often comparable to commercial products.  To achieve this level of
@@ -394,9 +394,9 @@ professional support for Quality Assurance (QA).  This kind of investment is typ
 made in familiar software packages that tend not to feature new
 research ideas.  Many of the most popular examples---Hadoop, Linux,
 OpenOffice---are direct clones of well-identified,
-pre-existing commercial efforts.
+pre-existing commercial efforts. \fs{I think Linux is too big a project to say it does not contain research. This paragraph also sounds a bit too negative to me. Like ``Today's OSS consists mainly of boring rip-offs of commercial products.'' While not completely untrue, there is more to the story.}
 
-MADlib is making an explicit effort to establish a new model for industry support of both academic research and open source software.  Many academic research projects are supported by financial grants and gifts from companies.  In MADlib, the corporate donation consists of a commitment to allocate significant professional software engineering time to an open-source collaboration with academia.  This leverages a strength of industry that cannot be replicated on a university
+MADlib is making an explicit effort to establish a new model for industry support of both academic research and open source software.  Many academic research projects are supported by financial grants and gifts from companies.  In MADlib, the corporate donation consists of a commitment to allocate significant professional software engineering time to an open-source collaboration with academia. \fs{This paragraph sounds as if MADlib is contrasting, say, Linux here in that (a) it contains cutting-edge research and (b) corporate donations consist mainly of labor instead of money. I do not see that MADlib is singular in that respect. Think of what, e.g., RedHat does, or in fact any company that makes money with GPL'd software.} This leverages a strength of industry that cannot be replicated on a university
 campus.  Companies can hire high-quality, experienced software
 engineers with the attraction of well-compensated, long-term career
 paths.  Equally important, software shops can offer an entire software
@@ -404,7 +404,8 @@ engineering pipeline that cannot be replicated on campus:
 this includes QA processes encompassing specialized QA engineers as
 well as software testing procedures and hardware platforms for
 automated testing at scale.  The hope is that the corporate staffing of research projects like MADlib can both enable
-academic open-source research, and speed technology transfer to industry.
+academic open-source research, and speed technology transfer to industry. \fs{Linux is used and advanced by lots of students and academics, and there are companies like RedHat, IBM, etc.}
+
 \subsection{Status and Directions for Growth}
 
 The initial beta release of MADlib in {\bf MONTH} of 2012 \fs{We need to agree on what we call the current release. `beta'? Just v0.3?} was focused on establishing a baseline of 
@@ -420,7 +421,7 @@ to validate MADlib as a research vehicle, by fostering a small number of  univer
 
 With the recent MADlib release completed \fs{`Recent release' might be too unspecific. We plan to complete at least one more release cycle until the conference/publication of the proceedings.}, there is room for growth in multiple
 dimensions.  The library infrastructure itself is still in beta, and
-has room to mature.  There is room for enhancements in its core
+has room to mature. \fs{I agree.} There is room for enhancements in its core
 treatment of mathematical kernels (e.g.\ linear algebra over both
 sparse and dense matrices) especially in out-of-core settings.  And of
 course there will always be an appetite for additional statistical models and
@@ -430,7 +431,7 @@ mechanical but non-trivial software development effort that will
 span the infrastructure (e.g.\ the need for a cross-platform
 installer), the methods themselves (particularly the user-defined
 functions) and the software engineering infrastructure (e.g.\ the need
-for QA support on additional database engines).
+for QA support on additional database engines). \fs{True for pure SQL modules. For pgSQL/C modules, porting at this point is essentially rewriting. And for C++ AL modules, porting is a non-trivial rewrite of the AL.}
 
 \section{MADlib Architecture}
 \label{sec:gen}
