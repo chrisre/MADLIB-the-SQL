@@ -655,7 +655,7 @@ In ordinary-least-squares (OLS) linear regression the goal is to fit a linear fu
 It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations \cite{DBLP:conf/nips/ChuKLYBNO06}---in extensible database terms, it can be done with a simple user-defined aggregate. The principal observation is this: $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point.  Summation is associative, so data parallelism virtually comes for free---we can compute the per-segment subsums of the previous expressions locally on each segment, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
 
 \subsubsection{MADlib Implementation}
-We assume that data points are stored as \texttt{(x DOUBLE PRECISION[], y DOUBLE PRECISION)} tuples. Linear regression is then implemented as a user-defined aggregate with a transition and final function roughly as in Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final}, respectively. The merge function just adds all values in the transition states together. \jmh{can you be specific about what got left out of the listings?}
+We assume that data points are stored as \texttt{(x DOUBLE PRECISION[], y DOUBLE PRECISION)} tuples. Linear regression is then implemented as a user-defined aggregate with a transition and final function roughly as in Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final}, respectively. Specifically, we have omitted finiteness checks and several output statistics in the code example. \jmh{can you be specific about what got left out of the listings?} \fs{Done.} The merge function, which is not shown, just adds all values in the transition states together.
 
 \begin{Verbatim}[commandchars=\\\{\}, ,numbersep=5pt,tabsize=4,fontsize=\scriptsize ,framesep=2mm]
 psql# \PY{k}{SELECT} \PY{p}{(}\PY{n}{linregr}\PY{p}{(}\PY{n}{y}\PY{p}{,} \PY{n}{x}\PY{p}{)}\PY{p}{)}\PY{p}{.}\PY{o}{*} \PY{k}{FROM} \PY{n}{data}\PY{p}{;}
@@ -675,18 +675,30 @@ condition_no | 169.509326412661
 	\begin{cppcode}
 AnyType
 linregr_transition::run(AnyType &args) {
+    // Transition state is a class that wraps an array.
+    // We expect a mutable array. If DBMS allows
+    // modifications, copying will be avoided.
     LinRegrTransitionState<
         MutableArrayHandle<double> > state = args[0];
+    // Dependent variable is a double-precision float
     double y = args[1].getAs<double>();
+    // Vector of independent variables wraps an immutable
+    // array (again, no unnecessary copying). This maps
+    // to an Eigen type
     HandleMap<const ColumnVector> x
         = args[2].getAs<ArrayHandle<double> >();
     
     if (state.numRows == 0)
+        // The first row determines the number of
+        // independent variables
         state.initialize(*this, x.size());
     state.numRows++;
     state.y_sum += y;
     state.y_square_sum += y * y;
+    // noalias informs Eigen to multiply in-place
     state.X_transp_Y.noalias() += x * y;
+    // Since $X^TX$ is symmetric, we only need to
+    // compute a triangular part
     triangularView<Lower>(state.X_transp_X)
         += x * trans(x);
     
@@ -701,20 +713,26 @@ linregr_transition::run(AnyType &args) {
 	\begin{cppcode}
 AnyType
 linregr_final::run(AnyType &args) {
+    // Immutable array: Array will never be copied
     LinRegrTransitionState<
         ArrayHandle<double> > state = args[0];
 
+    // The following is a MADlib class that wraps Eigen's
+    // solver for self-adjoint matrices.
     SymmetricPositiveDefiniteEigenDecomposition<Matrix>
         decomposition(state.X_transp_X, EigenvaluesOnly,
             ComputePseudoInverse);
     
     Matrix inverse_of_X_transp_X
-        = decomposition.pseudoInverse();		
+        = decomposition.pseudoInverse();
+    // Let backend allocate array for coefficients so to
+    // avoid copying on return (if supported by DBMS).
     HandleMap<ColumnVector> coef(
         allocateArray<double>(state.widthOfX));
     coef.noalias() = inverse_of_X_transp_X
         * state.X_transp_Y;
 
+    // Return a composite value.
     AnyType tuple;
     tuple << coef << decomposition.conditionNo();
     return tuple;
@@ -725,7 +743,7 @@ linregr_final::run(AnyType &args) {
 \end{code}
 
 \subsection{Multi-Pass: (Binary) Logistic Regression}
-In (binary) logistic regression, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \{ 0,1 \}$, and our goal is to find the vector $\widehat{\vec b}$ that maximizes $\prod_{i=1}^n \sigma((-1)^{y_i + 1} \cdot \langle \widehat{\vec b}, \vec x_i \rangle)$. Here, $\sigma(z) = \frac{1}{1+\exp(z)}$ denotes the logistic function. Statistically, this is the maximum-likelihood estimate for an unknown vector $\vec b$ under the assumption that each data point $y_i$ is a random variate with $\Pr[y_i = 1 \mid \vec x_i] = \sigma( \langle \vec b, \vec x_i \rangle )$ and that all observations are independent.
+In (binary) logistic regression, we are given points $(\vec x_1, y_1)$, $\dots$, $(\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \{ 0,1 \}$, and our goal is to find the vector $\widehat{\vec b}$ that maximizes $\prod_{i=1}^n \sigma((-1)^{y_i + 1} \cdot \langle \widehat{\vec b}, \vec x_i \rangle)$. Here, $\sigma(z) = \frac{1}{1+\exp(z)}$ denotes the logistic function. Statistically, this is the max\-i\-mum-likelihood estimate for an unknown vector $\vec b$ under the assumption that each $y_i$ is a random variate with $\Pr[y_i = 1 \mid \vec x_i] = \sigma( \langle \vec b, \vec x_i \rangle )$ and that all observations are independent.
 
 It is well-known that, in general, no closed-formula expression for $\widehat{\vec b}$ exists. Instead, $\widehat{\vec b}$ can be computed as the solution of a convex program via standard iterative methods. Arguably, the most common method is to maximize the logarithm of the likelihood using Newton's method. In the case of logistic regression this reduces to \emph{iteratively reweighted least squares} with iteration rule $\widehat{\vec \beta}_{m+1} = (X^T D X)^{-1} X^T D \vec z_m$. \ksn{I don't think D in the iteration rule is explained.} \fs{Fixed.} Here $D$ and $\vec z_m$ are transformations of $X$ and $\widehat{\vec \beta}_m$.
 
@@ -737,7 +755,7 @@ Each individual iteration can be implemented via a user-defined aggregate using 
 
 Unfortunately, implementing logistic regression using a driver function leads to a different interface:
 \begin{sqlcode}
-	SELECT * FROM logregr('y', 'x', 'data');
+SELECT * FROM logregr('y', 'x', 'data');
 \end{sqlcode}
 A problem with this implementation is obvious: the \texttt{logregr} UDF is not an aggregate function and cannot be used in grouping constructs. This makes doing multiple logistic regressions at once harder than multiple linear regressions.
 
