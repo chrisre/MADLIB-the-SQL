@@ -565,7 +565,7 @@ involved SQL queries.  When implemented correctly, the performance of the script
 occasionally to kick off much larger bulk tasks that are executed by
 the core database engine.
 
-\subsubsection{Driver Functions for Multipass Iteration}
+\subsubsection{Driver Functions for Multipass Iteration} \label{sec:DriverFunctions}
 % \ksn{I would put this section before Section `Templated Queries'. \fs{I did this.}
 %   Do we need to clarify that iteration is only an issue when each iteration requires access to multiple data points?
 %   An iterative algorithm that processes training data points one at a time is perfectly suited to SQL implementation as an aggregate function, so iterations by itself is not necessarily a problem.}
@@ -844,9 +844,11 @@ Here, the diagonal matrix $D_m$ and the vector $\vec z_m$ are transformations of
 
 \subsubsection{MADlib Implementation} \label{sec:log-regression-impl}
 
-\jmh{I think the logistic regression section will need work from you, to help the user understand how the SQL statement invokes the Python driver, and how the Python driver in turn invokes each iteration in SQL.  Clarifying that control flow will help a lot more than Listing 3, so if a picture is in order feel free to replace Listing 3.  (BTW feel free to upload a photo of a pencil drawing for now, we can clean it up tomorrow).  Alternatively, be sure to add comments or caption to Listing 3 so it's understandable.}
+%\jmh{I think the logistic regression section will need work from you, to help the user understand how the SQL statement invokes the Python driver, and how the Python driver in turn invokes each iteration in SQL.  Clarifying that control flow will help a lot more than Listing 3, so if a picture is in order feel free to replace Listing 3.  (BTW feel free to upload a photo of a pencil drawing for now, we can clean it up tomorrow).  Alternatively, be sure to add comments or caption to Listing 3 so it's understandable.}
 
-Each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop. We therefore implement a driver UDF in Python, as shown in Figure~\ref{fig:log-reg-driver}. MADlib provides a Python function that iteratively calls an aggregate function, stores the computed state, and terminates once the stopping criterion has been reached.
+Each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations and checking for convergence require a further outer loop. We therefore implement a driver UDF in Python. The control flow follows the high-level outline from Section~\ref{sec:DriverFunctions} and is illustrated as an activity diagram in Figure~\ref{fig:log-reg-driver}. Here, the shaded shapes are executions of generated SQL, where \texttt{\textit{current\_iteration}} is a template parameter that is substituted with the corresponding Python variable. 
+
+Specifically, the UDF first creates a temporary table for storing the inter-iteration states. Then, the Python code iteratively calls the UDA for updating the iteration state, each time adding a new row to the temporary table. Once the convergence criterion has been reached, the state is converted into the return value. The important point to note is that there is no data movement between the driver function and the database engine---all heavy lifting is done within the database engine.
 
 Unfortunately, implementing logistic regression using a driver function leads to a different interface than the one we provided for linear regression:
 
@@ -864,7 +866,8 @@ A problem with this implementation is obvious: the \texttt{logregr} UDF is not a
 % \ksn{The discussion ends with too much gloom. Are we not going to propose some solution moving forward? Or does this go down as one of the fundamental limitations of implementing things in SQL?}
 
 \begin{figure}
-	\includegraphics[scale=0.5]{LogisticRegression}
+	\centering
+	\includegraphics[scale=0.71]{LogisticRegression}
 	\caption{Sequence Diagram for Logistic Regression}
 	\label{fig:log-reg-driver}
 \end{figure}
