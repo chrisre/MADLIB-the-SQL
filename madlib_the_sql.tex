@@ -132,19 +132,22 @@ morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,mor
 \title{The MADlib Analytics Library\\{\LARGE\em (or MAD Skills, the SQL)}}
 
 
-\numberofauthors{4} %  in this sample file, there are a *total*
+\numberofauthors{9} %  in this sample file, there are a *total*
 % of EIGHT authors. SIX appear on the 'first-page' (for formatting
 % reasons) and the remaining two appear in the \additionalauthors section.
 
 \author{Joseph M. Hellerstein\\{\small U.C. Berkeley} \and
- Christoper Re\\{\small U. Wisconsin} \and
+ Christoper R\'{e}\\{\small U. Wisconsin} \and
  Florian Schoppmann\\{\small Greenplum} \and
- Daisy Zhe Wang\\{\small U. Florida} 
+ Daisy Zhe Wang\\{\small U. Florida} \and
  % \and
  % Gavin Sherry\\{\small Greenplum} \and
- % Caleb Welton\\{\small Greenplum}
  % Eugene Fratkin\\{\small Greenplum} \and
- % Aleks Gorajek\\{\small Greenplum} \and
+ Aleks Gorajek\\{\small Greenplum} \and
+ Caleb Welton\\{\small Greenplum} \and
+ Aaron (Xixuan) Feng \\ {\small U. Wisconsin} \and
+ Kun Li \\{\small U. Florida} \and
+ Arun Kumar \\{\small U. Wisconsin} \and
  % Steven Hillion\\{\small Alpine Data Labs} \and
  % Luke Lonergan\\{\small Greenplum} \and
  % Kee Siong Ng\\{\small Greenplum} \and 
@@ -550,7 +553,7 @@ Nonetheless, the aggregation paradigm (or in functional programming terms, ``fol
 	\item A \emph{final function} that takes a transition state and transforms it into the output value.
 \end{enumerate}
 Clearly, a user-defined aggregate is inherently data-parallel if 
-it is Distributive~\cite{gray1997data}: 
+% it is Distributive~\cite{gray1997data}: 
 the transition function is associative and the merge function returns the same result as if the transition function was called repeatedly for every individual element in the second state.
 
 Unfortunately, user-defined aggregates are not enough. In designing the high-level orchestration of data movement for analytics, we ran across two main
@@ -746,8 +749,6 @@ condition_no | 169.5093
 Note that the linregr Python UDF produces a composite record type in the output, which is a feature of PostgreSQL and Greenplum.   This would be easy to flatten into a string in a strictly relational implementation.
 % \jmh{That's some pretty non-relational looking output.  Shall we explain?} \fs{Do you mean explaining that logregr returns a composite type?}  \ksn{Please reduce the precision of the floating point numbers to something sensible.}
 
-
-\jmh{In Listings 1 \& 2, we need either comments inline or a longer caption to explain what's there.  Specifically, explain the casts and templates, and note the invocation of Eigen routines (matrix multiple, transposition, pseudo-inverse).  I can guess at that, but you'll have to clarify.}
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -1566,27 +1567,28 @@ implementations, but runs natively in a DBMS close to the data~\cite{DBLP:journa
 %% POS/IE/ER models Query-driven Text Analysis Interface (including
 %% key-word search and more advanced)
 
-\section{Related Work: Ecosystem of Scalable Analytics}
+\section{Related Work}
 The space of approaches to marry analytics with data is large and
 seems to be growing rapidly. At a high-level there are two approaches,
 (1) bring a statistical language to a data processing substrate, or
 (2) provide a framework to express statistical techniques on top of a
-data processing substrae. Specifically, we split the approaches to
+data processing substrate. Specifically, we split the approaches to
 achieve this marriage into two groups: (1) {\em top-down approaches}
 begin with a high-level statistical programming language, e.g., R or
 Matlab. The technical goal is to build a parallel data processing
 infrastructure that is able to support running this high-level
 language in parallel. Examples of approach include System ML from
-IBM~\cite{SystemML:Ghoting:2011:SDM:2004686.2005625}, Revolution
+IBM~\cite{systemml}, Revolution
 Analytics~\cite{Revolution}, and
 SNOW~\cite{SNOW:Tierney:2009:SPC:1598913.1598918}. (2) We call the
 second group {\em framework-based approaches} whose goal is to provide
 a set of building blocks (individual machine-learning algorithms)
 along with library support for micro- and macro-programming to write the
 algorithms. Recent examples are Mahout~\cite{mahout},
-Graphlab~\cite{Graphlab:conf/uai/LowGKBGH10}, and MADlib. One can view
-the work of the 90s of integrating the machine learning toolkits as an
-early framework-based approach.
+Graphlab~\cite{Graphlab:conf/uai/LowGKBGH10}, and MADlib. 
+% % One can view
+% % the work of the 90s of integrating the machine learning toolkits as an
+% early framework-based approach.
 
 \paragraph*{Top-Down, Language-based Approaches} 
 Within the approaches of type (1), we again divide the space into
@@ -1598,11 +1600,11 @@ framework of R. In contrast in a declarative approach, the analyst
 declares their analysis problem and it is the responsibility of the
 system to achieve this goal (in analogy with a standard
 RDBMS). Examples of the declarative approach include
-SystemML~\cite{SystemML:Ghoting:2011:SDM:2004686.2005625}, which is an
+systemml~\cite{systemml}, which is an
 effort from IBM to provide an R-like language to specify machine
-learning algorithms. In SystemML, these high-level tasks are then
+learning algorithms. In systemml, these high-level tasks are then
 compiled down to a Hadoop-based infrastructure. The essence of
-SystemML is its compilation techniques: they view R as a declarative
+systemml is its compilation techniques: they view R as a declarative
 language, and the goal of their system is to compile this language
 into an analog of the relational algebra. Similar approaches are taken
 in Revolution Analytics~\cite{Revolution} and Oracle's new parallel R
@@ -1612,37 +1614,38 @@ parallelize code written in R.
 \paragraph*{Framework-based Approaches} 
 In framework-based approaches, the goal is to provide the analyst with
 low-level primitives and coordination primitives built on top of a
-data processing substrate. Typically, frame-work based approaches
-offer a template whose goal is to autoamte the common tasks of
-deploying an analytic taks. Framework-based approaches differ in what
+data processing substrate. Typically, framework-based approaches
+offer a template whose goal is to automate the common aspects of
+deploying an analytic task. Framework-based approaches differ in what
 the data-processing substrates. For example, MADlib is in in this
 category as it provides a library of functions over an RDBMS. The
-macro- and micro-programmin described earlier are examples of design
-templates. Apache Mahout~\cite{mahout} goal is to provide an
+macro- and micro-programming described earlier are examples of design
+templates. The goal of Apache Mahout~\cite{mahout} is to provide an
 open-source machine learning library over Apache Hadoop. Currently,
 Mahout provides a library of machine learning algorithms and a
 template to extend this library. At a lower level, the DryadLINQ large
 vector library provides the necessary data types to build analysis
 tasks (e.g., vectors) that are commonly used by machine learning
-techniques. GraphLab is a framework to simplify the design of
+techniques. 
+SciDB advocates a completely rewritten DBMS engine for numerical computation, arguing that RDBMSs have ``the wrong data model, the wrong operators, and are missing required capabilities''~\cite{scidb}.  MADlib may be seen as a partial refutation of this claim. Indeed, the assertion in~\cite{scidb} that ``RDBMSs, such as GreenPlum~[sic]...must convert a table to an array inside user-defined functions'' is incorrect: the MADlib C++ library hides representation from the UDF developer and only pays for copies when modifying immutable structures.  
+GraphLab is a framework to simplify the design of
 programming parallel machine learning tasks. The core computational
 abstraction is a graph of processing nodes that allows one to define
 asynchronous updates. Graphlab initially focused on providing a
 framework for easy access to multicore
 parallelism~\cite{Graphlab:conf/uai/LowGKBGH10}. However, the core
 computational abstraction is general and is now also deployed in a
-cluster setting. A related approach to simplify writing
-high-performance main-memory systems is
-SPARK~\cite{Zaharia:EECS-2011-82}. SPARK provides access to the
-main-memory of a cluster of machines while providing fault tolerance
-issues using the concept of {\em resilient distributed datasets},
-which are read-only collections of data that can be partitioned across
-a dataset. SPARK blurs the distinction between the framework and
-language-based approaches as it is integrated into a general purpose
-programming language (Scala). Another popular toolkit in this space is
+cluster setting. 
+Another popular toolkit in this space is
 Vowpal Wabbit~\cite{vw} that is extensively used in the academic
-machine learning community and contains cutting edge techniques for
+machine learning community and provides
 high performance.
+
+Two recent efforts to provide Scala-based domain-specific languages (DSLs) and parallel execution frameworks blur distinctions between frameworks and language-based approaches. Spark~\cite{Zaharia:EECS-2011-82} is a Scala DSL targeted at Machine Learning, providing access to the
+fault-tolerant, main-memory {\em resilient distributed datasets}:
+which are read-only collections of data that can be partitioned across
+a cluster. ScalOps~\cite{scalops} provides a Scala DSL for Machine Learning that is translated to Datalog, which is then optimized to run in parallel on the Hyracks infrastructure~\cite{hyracks}.  Given its roots in Datalog and parallel relational algebra, ScalOps bears more similarity to MADlib than any of the other toolkits mentioned here.  It would be interesting to try and compile its DSL to the MADlib runtime.
+
 
 \paragraph*{Other Data Processing Systems}
 There are a host of data processing techniques that can be used to
@@ -1694,14 +1697,34 @@ tolerance.
 %          \item Supervised learning
 %        \end{itemize}
 \section{Conclusion and Discussion}
-MADlib v0.3 provides in-database implementations of a large number of widely-used statistical and analytic methods.  It is still in its early stages of development, but is already in use both at research universities and at customer sites.  In future we hope to foster more partnerships with academic institutions, database vendors, and customers.  In doing so, we hope to jointly pursue additional analytic methods prioritized by both research ``push'' and customer ``pull''.  We also look forward to ports across DBMSs.  
+Scalable analytics are a clear priority for the research and industrial communities.  MADlib was designed to fill a vacuum on that front for SQL DBMSs, with a specific effort to connect database researchers to market needs.
+In our experience, a parallel DBMS provides a very efficient and flexible dataflow substrate for implementing statistical and analytic methods at scale. The current state of SQL extensions across different DBMSs remains somewhat frustrating---standard, robust support for recursion, window aggregates and linear-algebra packages would solve many or most of these problems.  Since this is unlikely to occur across vendors in the short term, we believe that MADlib can evolve reasonable workarounds at the library and ``design pattern'' level.
 
-One motivation for building MADlib was to fill a vacuum on the database side of the scalable analytics open-source ecosystem.
-In our experience, a parallel DBMS makes a fine dataflow substrate for implementing statistical and analytics methods at scale.  We have not yet undertaken comparisons with comparable projects over Hadoop like Mahout or SystemML.  From a marketplace perspective, such comparisons are not terribly important right now: customers currently desire both SQL and Hadoop-based analytics libraries simply because they have data in both environments.  So the best strategy currently is to foster work like MADlib and Mahout side-by-side.  From a technical perspective, performance comparisons would likely boil down to well-known (and likely temporary) tradeoffs between the current states of DBMSs and Hadoop: C vs. Java, pipelining vs. checkpointing, etc.~\cite{pavlo2009comparison}.  These tradeoffs are not endemic, and one can expect them to level off over time as the various systems expand their feature sets.
+The popular alternative to a DBMS infrastructure today is Hadoop MapReduce, which provides much lower-level programming APIs than SQL.
+We have not yet undertaken performance comparisons with Hadoop-based analytics projects like Mahout.  Performance comparisons between MADlib and Mahout today would likely boil down to (a) variations in algorithm implementations, and (b) well-known (and likely temporary) tradeoffs between the current states of DBMSs and Hadoop: C vs. Java, pipelining vs. checkpointing, etc.~\cite{pavlo2009comparison}.  None of these variations and tradeoffs seem endemic, and they may well converge over time.  Moreover, from a marketplace perspective, such comparisons are not urgent: many users deploy both platforms and desire analytics libraries for each.  So a reasonable strategy for the community is to foster analytics work in both SQL and Hadoop environments, and explore new architectures (GraphLab, SciDB, ScalOps, etc.) at the same time.  
 
-More interesting questions arise by focusing a level up, at the language layer.  MADlib's use of Python, SQL, and C++ abstractions for algebra reflect the realities of the SQL development ecosystem, rather than an idealized language design.  Perhaps a better approach would be to design a clean high-level language for machine learning, and compile down to the pragmatic mix that works on a contemporary DBMS.  SystemML and Scalops take this approach for MapReduce.  More interestingly, one could try to {\em cross-compile} such a language to multiple platforms---including not only the well-known parallel dataflow platforms (DBMSs, MapReduce) but also specialized machine learning engines like GraphLab that are architected quite differently.  Doing so would not only unify the open-source ecosystem for analytics around a single language, but could also highlight important tradeoffs between these very different architectures for parallelism.
+Compared to most highly scalable analytics packages today, MADlib v0.3 provides a relatively large number of widely-used statistical and analytic methods.  It is still in its early stages of development, but is already in use both at research universities and at customer sites.  As the current software matures, we hope to foster more partnerships with academic institutions, database vendors, and customers.  In doing so, we plan to pursue additional analytic methods prioritized by both research ``push'' and customer ``pull''.  We also look forward to ports across DBMSs.
 
-{\small \bibliographystyle{abbrv}
+
+
+% More interesting questions arise by focusing a level up, at the language layer.  MADlib's use of Python, SQL, and C++ abstractions for algebra reflect the realities of the SQL development ecosystem, rather than an idealized language design.  Perhaps a better approach would be to design a clean high-level language for machine learning, and compile down to the pragmatic mix that works on a contemporary DBMS.  systemml and ScalOps take this approach for MapReduce.  More interestingly, one could try to {\em cross-compile} such a language to multiple platforms---including not only the well-known parallel dataflow platforms (DBMSs, MapReduce) but also specialized machine learning engines like GraphLab that are architected quite differently.  Doing so would not only unify the open-source ecosystem for analytics around a single language, but could also highlight important tradeoffs between these very different architectures for parallelism.
+
+\section{Acknowledgments}
+In addition to the authors, the following people have contributed to MADlib and its development:
+Jianwang Ao, 
+Joel Cardoza, 
+Eugene Fratkin, 
+Christan Grant, 
+Hitoshi Harada, 
+Steven Hillion, 
+Luke Lonergan, 
+KeeSiong Ng, 
+Noelle Sio, 
+Gavin Yang, 
+Ren Yi, 
+Kazi Zaman, 
+Huanming Zhang.
+{\small \bibliographystyle{abbrv-etal}
   \bibliography{chris.local.wopages,WriteupRelWork} }
 
 \end{document}

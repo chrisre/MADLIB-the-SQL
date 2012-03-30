@@ -319,8 +319,8 @@
 \newfont{\subttlfnt}{phvr at 14pt}
 \newfont{\subttlit}{phvro at 14pt} % GM 2/4/2000
 \newfont{\subttlbf}{phvb at 14pt}  % 13 Jan 00 gkmt
-\newfont{\aufnt}{phvr at 12pt}
-\newfont{\auit}{phvro at 12pt}     % GM 2/4/2000
+\newfont{\aufnt}{phvr at 10pt}
+\newfont{\auit}{phvro at 10pt}     % GM 2/4/2000
 \newfont{\affaddr}{phvr at 10pt}
 \newfont{\affaddrit}{phvro at 10pt} % GM 2/4/2000
 \newfont{\eaddfnt}{phvr at 12pt}
@@ -696,7 +696,7 @@
     \vskip 1.5em                % Vertical space after title.
 %This should be the subtitle.
 {\subttlfnt \the\subtitletext\par}\vskip 1.25em%\fi
-    {\baselineskip 16pt\aufnt   % each author set in \12 pt Arial, in a
+    {\baselineskip 12pt\aufnt   % each author set in \12 pt Arial, in a
      \lineskip .5em             % tabular environment
      \begin{tabular}[t]{c}\@author
      \end{tabular}\par}
