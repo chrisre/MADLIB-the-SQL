@@ -213,7 +213,7 @@ repellent) aspect of the platform, the {\em Agile} design patterns used for
 modeling, loading and iterating on data, and the {\em Deep} statistical models and
 algorithms being used.  The ``MAD Skills'' paper that resulted described
 this pattern, and included a number of non-trivial analytics
-techniques implemented as simple SQL scripts~\cite{madskills}.
+techniques implemented as simple SQL scripts~\cite{DBLP:journals/pvldb/CohenDDHW09}.
 
 After the publication of the paper, it became clear that there was
 significant interest not only in its design aspects, but
@@ -223,7 +223,7 @@ requesting it of consultants and vendors, and academics were
 increasingly publishing papers on the topic.  What was missing was a
 software framework to focus the energy of the community, and connect
 the various interested constituencies.  This led to the design of
-{\bf MADlib}, the subject of this paper.  
+MADlib, the subject of this paper.  
 
 \subsection*{Introducing MADlib}
 MADlib is a library of analytic methods that can be installed and
@@ -297,7 +297,7 @@ ports to new platforms.
 The primary goal of the MADlib open-source project is to accelerate
 innovation and technology transfer in the Data Science community via a shared
 library of scalable in-database analytics, much as the CRAN library
-serves the statistics community~\cite{cran}.  Unlike CRAN, which is
+serves the statistics community~\cite{ripley2001r}.  Unlike CRAN, which is
 customized to the R analytics engine, we hope that MADlib's grounding
 in standard SQL can lead to community ports to a
 variety of parallel database engines. 
@@ -346,7 +346,7 @@ that an analyst needs to perform, but the first, ``S'' step makes less and less 
 Driven in part by this observation, momentum has been gathering around efforts to develop scalable full-dataset analytics. One popular alternative is to
 push the statistical methods directly into so-called Big Data processing platforms---notably, Apache Hadoop. For example, the open-source Mahout project
 aims to implement machine learning tools within Hadoop, harnessing
- interest in both academia and industry~\cite{mlformr,mahout}. This is
+ interest in both academia and industry~\cite{DBLP:conf/nips/ChuKLYBNO06,mahout}. This is
 certainly an attractive path to solution, and is being advocated by
 major players including IBM~\cite{systemml}.
 
@@ -479,7 +479,7 @@ there is the challenge of porting MADlib to DBMSs other than PostgreSQL and Gree
 Porting MADlib across DBMSs is a
 mechanical but non-trivial software development effort.  At the macro level, porting will involve the package infrastructure (e.g.\ a cross-platform
 installer) and software engineering framework (e.g.\ testing scripts for additional database engines).  At the micro-programming logic level, inner loops of various methods will need to be revisited (particularly user-defined
-functions). Finally, since Greenplum retains most of the extension interfaces exposed by PostgreSQL, the current MADlib portability interfaces (e.g., the C++ abstraction layer for UDFs in Section~\ref{}) will likely require revisions when porting to a system without PostgreSQL roots.
+functions). Finally, since Greenplum retains most of the extension interfaces exposed by PostgreSQL, the current MADlib portability interfaces (e.g., the C++ abstraction layer for UDFs in Section~\ref{sec:cplusplus}) will likely require revisions when porting to a system without PostgreSQL roots.
 %\fs{True for pure SQL modules. For pgSQL/C modules, porting at this point is essentially rewriting. And for C++ AL modules, porting is a non-trivial rewrite of the AL.}
 % \jmh{I think that's all covered above.}
 
@@ -523,7 +523,7 @@ partitioning of the matrix, and a pattern to process the pieces and
 merge results back together.  This partitioning and dataflow is
 currently outside the scope of a traditional query optimizer or
 database design tool.  But there is a rich literature from scientific
-computing on these issues~\cite{demmel} 
+computing on these issues (e.g.~\cite{choi1996scalapack}) 
 % \fs{I suppose this refers to ``Applied numerical linear algebra''?} 
 that database programmers can use to craft efficient in-database implementations.  Once data is properly partitioned, database engines shine at orchestrating the
 resulting data movement of partitions and the piecewise results of
@@ -536,7 +536,7 @@ computation.
 %   We should mention that UDA and parallel constructs like the merge and final functions lend themselves nicely to the implementation of the large body of work on online learning algorithms and model averaging techniques over such algorithms currently being actively pursued in the machine learning literature. The Zinkevish, Weimer, Smola, Li paper is a good reference.}
 %  \fs{I followed KeeSiong's suggestions.}
 
-The most important and the most basic building block in the macro-programming of MADlib is the use of user-defined aggregates (UDAs). In general, aggregates---and the related window functions---are the natural way in SQL to implement mathematical functions that take as input the values of an arbitrary number of rows (tuples). DBMSs typically implement aggregates as data-parallel streaming algorithms. Indeed, there is a large body of recent works on online learning algorithms and model averaging techniques that very well fit the computational model of aggregates (see, e.g., \cite{Zinkevich10}).
+The most important and the most basic building block in the macro-programming of MADlib is the use of user-defined aggregates (UDAs). In general, aggregates---and the related window functions---are the natural way in SQL to implement mathematical functions that take as input the values of an arbitrary number of rows (tuples). DBMSs typically implement aggregates as data-parallel streaming algorithms. Indeed, there is a large body of recent work on online learning algorithms and model averaging techniques that fit the computational model of aggregates well (see, e.g., \cite{Zinkevich10}).
 
 Unfortunately, extension interfaces for user-defined aggregates vary widely across vendors and open source systems.
 % , and many vendors do  SQL standard does not prescribe an extension interface for user-defined aggregates \jmh{we'd better triple-check that} \fs{I'll have another look. Can somebody else check, too?}, and they are typically implemented using vendor-specific APIs. 
@@ -549,7 +549,9 @@ Nonetheless, the aggregation paradigm (or in functional programming terms, ``fol
 	% Again in functional-programming terms, a merge operation is a tree-like fold.
 	\item A \emph{final function} that takes a transition state and transforms it into the output value.
 \end{enumerate}
-Clearly, a user-defined aggregate is inherently data-parallel if it has what Gray, et al. call the Distributive property~\cite{datacube}: the transition function is associative and the merge function returns the same result as if the transition function was called repeatedly for every individual element in the second state.
+Clearly, a user-defined aggregate is inherently data-parallel if 
+it is Distributive~\cite{gray1997data}: 
+the transition function is associative and the merge function returns the same result as if the transition function was called repeatedly for every individual element in the second state.
 
 Unfortunately, user-defined aggregates are not enough. In designing the high-level orchestration of data movement for analytics, we ran across two main
 limitations in standard SQL that we describe next.  We addressed both these limitations using driver code written in simple
@@ -572,7 +574,7 @@ problem, whose applicability depends on the context.
 \noindent{\bf Counted Iteration via Virtual Tables}.
 In order to drive a fixed number $n$ of independent
 iterations, it is often simplest (and very efficient) to declare a virtual table with $n$ rows (e.g. via PostgreSQL's \texttt{generate\_series} table function), and join it with a view representing a single iteration.  This approach was used to implement
-$m$-of-$n$ Bootstrap sampling in the original MAD Skills paper~\cite{MADSkills}.  It is supported in some fashion in a variety of DBMSs, sometimes by writing a simple table function consisting of a few lines of code.
+$m$-of-$n$ Bootstrap sampling in the original MAD Skills paper~\cite{DBLP:journals/pvldb/CohenDDHW09}.  It is supported in some fashion in a variety of DBMSs, sometimes by writing a simple table function consisting of a few lines of code.
 
 \noindent{\bf Window Aggregates for Stateful Iteration}.
 For
@@ -580,7 +582,7 @@ settings where the current iteration depends on previous iterations,
 SQL's windowed aggregate feature can be used to carry state across iterations. 
 % \fs{What is the idea here? We should either have a little bit more detail here, so that readers have an understanding, or omit this comment.}  
 Wang et al.\ took
-this approach to implement in-database MCMC inference~\cite{Daisy11}.  Unfortunately the level of support for window aggregates varies across SQL engines.
+this approach to implement in-database MCMC inference~\cite{wang2011hybrid} (Section~\ref{sec:mcmc}).  Unfortunately the level of support for window aggregates varies across SQL engines.
 % Alternatively, some DBMSs might support multi-pass user-defined aggregate together with a stopping criterion. \jmh{Can somebody back up the previous sentence with an example?  I'm not familiar with this feature.} \fs{I checked DB2, Oracle, Teradata, MySQL, hsqldb. None of these have multi-pass aggregates. Still, multi-pass aggregates would make a lot of sense from a user perspective.}
 %\jmh{Sounds like a research project -- probably ends up being isomorphic to recursive queries.}
 
@@ -588,9 +590,9 @@ this approach to implement in-database MCMC inference~\cite{Daisy11}.  Unfortuna
 Most
 generally, it is possible to use the recursion features of SQL to
 perform iteration with arbitrary stopping conditions---this was used by
-Wang et al.\ to implement Viterbi inference~\cite{Daisy10}.  
-Unfortunately,
-the level of support for SQL's windowed aggregates and recursion
+Wang et al.\ to implement Viterbi inference~\cite{DBLP:journals/pvldb/WangFGH10} (Section~\ref{sec:viterbi}).  
+Unfortunately, like windowed aggregates,
+recursion support in SQL
 varies across database products, and does not form a reliable
 basis for portability.
 
@@ -841,7 +843,7 @@ Here $D$ and $\vec z_m$ are transformations of $X$ and $\widehat{\vec \beta}_m$.
 
 \jmh{I think the logistic regression section will need work from you, to help the user understand how the SQL statement invokes the Python driver, and how the Python driver in turn invokes each iteration in SQL.  Clarifying that control flow will help a lot more than Listing 3, so if a picture is in order feel free to replace Listing 3.  (BTW feel free to upload a photo of a pencil drawing for now, we can clean it up tomorrow).  Alternatively, be sure to add comments or caption to Listing 3 so it's understandable.}
 
-Each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop. We therefore implement a driver UDF in Python, as shown in Figure~\ref{fig:log-reg-driver}. MADlib provides the Python function \texttt{runIterativeAlg} that iteratively calls an aggregate function, stores the computed state, and terminates once the stopping criterion has been reached.
+Each individual iteration can be implemented via a user-defined aggregate using linear regression as a blueprint. However, the handling of iterations requires a further outer loop. We therefore implement a driver UDF in Python, as shown in Figure~\ref{fig:log-reg-driver} \jmh{dangling ref!}. MADlib provides the Python function \texttt{runIterativeAlg} that iteratively calls an aggregate function, stores the computed state, and terminates once the stopping criterion has been reached.
 
 Unfortunately, implementing logistic regression using a driver function leads to a different interface than the one we provided for linear regression:
 \begin{scriptsize}
@@ -1126,15 +1128,15 @@ done
 % \end{itemize}
 
 \section{University Research and MADlib}
-An initial goal of the MADlib project was to engage closely with academic researchers, and provide a platform and distribution channel for their work.  To that end, we report on two collaborations over the past years.  We first discuss a more recent collaboration with researchers at the University of Wisconsin.  We then report on a collaboration with researchers at Florida and Berkeley, which co-evolved with MADlib and explored similar issues (as part of the BayesStore project~\cite{daisy}) but was actually integrated with the MADlib infrastructure only recently.
+An initial goal of the MADlib project was to engage closely with academic researchers, and provide a platform and distribution channel for their work.  To that end, we report on two collaborations over the past years.  We first discuss a more recent collaboration with researchers at the University of Wisconsin.  We then report on a collaboration with researchers at Florida and Berkeley, which co-evolved with MADlib and explored similar issues (as part of the BayesStore project~\cite{DBLP:journals/pvldb/WangFGH10,wang2011hybrid}) but was actually integrated with the MADlib infrastructure only recently.
 \subsection{Wisconsin Contributions: Convex Optimization}
 
-\ksn{Stochastic gradient descent is the more modern term for Incremental gradient descent.
-  The last paragraph on better performance compared to the existing MADlib SVM implementation is pretty misguided.
-  The existing MADlib SVM implementation uses the same stochastic gradient descent approach.
-  The difference is that the SVM implementation works for both linear and non-linear kernels.
-  The new SVM implementation based on the convex programming meta framework only works for linear kernels...
-  The proper comparison is against the lsvm\_classification() algorithm (special case of linear SVM) in the existing SVM module, and I would be extremely surprised if that is slower.}
+% \ksn{Stochastic gradient descent is the more modern term for Incremental gradient descent.
+%   The last paragraph on better performance compared to the existing MADlib SVM implementation is pretty misguided.
+%   The existing MADlib SVM implementation uses the same stochastic gradient descent approach.
+%   The difference is that the SVM implementation works for both linear and non-linear kernels.
+%   The new SVM implementation based on the convex programming meta framework only works for linear kernels...
+%   The proper comparison is against the lsvm\_classification() algorithm (special case of linear SVM) in the existing SVM module, and I would be extremely surprised if that is slower.}
 
 The MADlib framework goes a long way toward making in-database
 analytic tools easier to deploy inside an RDBMS. Nevertheless, to
@@ -1182,7 +1184,9 @@ Figure~\ref{fig:xsquare}. The graph of this function is like all
 convex sets: bowl shaped. To minimize the function, we just need to
 get to the bottom of the bowl. As a result, even greedy schemes that
 decrease the function at each step will converge to an optimal
-solution. \fs{Minor detail: Can we phrase the previous sentence in a mathematically exact way? Of course, just because a monotonically decreasing sequence is bounded from below by some number does not yet imply convergence against that number.} One such popular greedy method is called a gradient
+solution. 
+% \fs{Minor detail: Can we phrase the previous sentence in a mathematically exact way? Of course, just because a monotonically decreasing sequence is bounded from below by some number does not yet imply convergence against that number.} 
+One such popular greedy method is called a gradient
 method. The idea is to find the steepest descent direction. In 1-d,
 this direction is the opposite direction of the derivative; in higher
 dimensions, it's called the gradient of $f$.
@@ -1203,9 +1207,9 @@ above is guaranteed to converge at a known rate. One can provide a
 provable (rapid) rate of convergence to the minimum value, which is in
 sharp contrast to a typical greedy search.  In our prototype
 implementation in MADlib, we picked up one such simple greedy
-algorithm, called incremental gradient descent
-(IGD)~\cite{RobbinsMonro51,BertsekasNLP}, that goes back to the
-1960s. IGD is a refinement of gradient methods that is useful when the
+algorithm, called stochastic (or sometimes, ``incremental'') gradient descent
+(SGD)~\cite{RobbinsMonro51,BertsekasNLP}, that goes back to the
+1960s. SGD is a refinement of gradient methods that is useful when the
 convex function we are considering, $f(x)$, has the form:
  
 \[ f(x)= \sum_{i=1}^N f_i (x) \]
@@ -1214,14 +1218,15 @@ If each of the $f_i$ is convex, then so is
 $f$~\cite[pg.~38]{boyd:cvx}. Notice that all problems in Table 1 are
 of this form: intuitively each of these models is finding some model
 (i.e., a vector $w$) that is scored on many different training
-examples. IGD leverages the above form to construct a rough estimate
+examples. SGD leverages the above form to construct a rough estimate
 of the gradient of $f$ using the gradient of a single term: for
 example, the estimate if we select $i$ is the gradient of $f_i$ (that
 we denote $G_i(x)$). The resulting algorithm is then described as:
 \begin{equation}
 x += - \alpha N * G_i(x)   
 \label{eq:incremental}\end{equation}
-This approximation is guaranteed to converge to an optimal solution. \fs{We should have the reference here.}
+This approximation is guaranteed to converge to an optimal solution~\cite{Nedic00}. 
+% \fs{We should have the reference here.}
 
  
 \paragraph*{Using the MADlib framework}
@@ -1233,22 +1238,23 @@ we observe Eq.~\ref{eq:incremental} is simply an expression over each
 tuple (to compute $G_i(x)$) which is then averaged together. Instead
 of averaging a single number, we average a vector of numbers. Here, we
 use the {\em macro-programming} provided by MADlib to handle all data
-access, spills to disk, parallelize the scans, etc.\footnote{Averaging
-  is more than a metaphor: recently a model-averaging technique where
-  one runs multiple models in parallel and averages the resulting
-  vectors component-wise is shown to improve convergence rates over a
-  serial approach~\cite{Zinkevich10}. Our implementation leverages
-  this observation to allow the DBMS freedom to process the aggregate in
-  whatever way it sees fit.
-  \ksn{The foot note "Averaging is more than a metaphor: recently a model-averaging?. " is also slightly misguided.
-  This is by no means a "recent" technique: such model averaging techniques have been around for quite some time (Bayes point machines, etc); the Smola paper merely gave a much more refined analysis to a well-known algorithm.}}
+access, spills to disk, parallelize the scans, etc.
+% \footnote{Averaging
+%   is more than a metaphor: recently a model-averaging technique where
+%   one runs multiple models in parallel and averages the resulting
+%   vectors component-wise is shown to improve convergence rates over a
+%   serial approach~\cite{Zinkevich10}. Our implementation leverages
+%   this observation to allow the DBMS freedom to process the aggregate in
+%   whatever way it sees fit.
+%   \ksn{The foot note "Averaging is more than a metaphor: recently a model-averaging?. " is also slightly misguided.
+%   This is by no means a "recent" technique: such model averaging techniques have been around for quite some time (Bayes point machines, etc); the Smola paper merely gave a much more refined analysis to a well-known algorithm.}}
 Finally, the macro programming layer
 helps us test for convergence (which is implemented with either a
 python combination or C driver.) Using this approach, we were able to
 add in implementations of all the models in
 Figure~\ref{fig:objs:grads} in a matter of days.
 
-In an upcoming paper we report initial experiments showing that our IGD based approach
+In an upcoming paper we report initial experiments showing that our SGD based approach
 acheives higher performance than prior data mining tools for some
 datasets~\cite{Re:sigmod12}.
 % For example, on the benchmark Forest dataset, our Logistic
@@ -1259,7 +1265,7 @@ datasets~\cite{Re:sigmod12}.
 
 
 %% The model averaging is the final ingredient to implement the entire
-%% IGD algorithm as a standard user-defined aggregation function: the
+%% SGD algorithm as a standard user-defined aggregation function: the
 %% model vector is the state of the aggregate, the transition function
 %% (or \texttt{sfunc}, in PostgreSQL terms) is the gradient step, and the
 %% final merge step is to simply average the models. There are important
@@ -1268,8 +1274,8 @@ datasets~\cite{Re:sigmod12}.
 %% scalability (e.g., parallelism).  Second, we get many data analysis
 %% tools almost for free: 
 
-%% IGD is one of a spectrum of gradient methods that differ in how they
-%% approximate they gradient term above: at one extreme is IGD where we
+%% SGD is one of a spectrum of gradient methods that differ in how they
+%% approximate they gradient term above: at one extreme is SGD where we
 %% approximate the gradient using a single term, at the other extreme are
 %% traditional batch gradient or conjugate gradient where one computes
 %% the full gradient exactly (conjugate gradient is provided by MADlib as
@@ -1281,7 +1287,7 @@ datasets~\cite{Re:sigmod12}.
 %% performance trade-offs in more detail for in-database analytics.
 
 
-%% That said, our initial experiments show that our IGD based approach
+%% That said, our initial experiments show that our SGD based approach
 %% acheives higher performance than prior data mining tools for some
 %% datasets. For example, on the benchmark Forest dataset, our Logistic
 %% Regression implementation is up to $4.6\times$ faster than the original
@@ -1313,7 +1319,7 @@ Recommendation & $\sum_{(i,j)\in\Omega} (L_i^T R_j - M_{ij})^2 + \mu\|L,R\|_F^2$
 Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) - \log Z(z_k) \right]$ \\
 \hline
 \end{tabular}}
-\caption{Models currently Implemented in MADlib using the IGD-based
+\caption{Models currently Implemented in MADlib using the SGD-based
   approach. 
   % In classification and regression methods, given
   % a dataset $\Omega \subseteq \mathbb{R}^{N} \times \mathbb{R}$, we
@@ -1337,7 +1343,7 @@ Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) 
 
 %% \paragraph*{Future Work and Challenges} We plan to work on three challenges: (1) improving performance, (2) an infrastructure to make tools in MADlib statistically robust, and (3) SAS-style Model Management. 
 %% \begin{enumerate}
-%% \item \textbf{Improving Performance}. IGDs are not a panacea. They
+%% \item \textbf{Improving Performance}. SGDs are not a panacea. They
 %%   have suboptimal runtime performance if extremely high precision is
 %%   required. We plan to add in more both mathematical and systems-level
 %%   optimization methods, which can be done transparently leveraging the
@@ -1364,7 +1370,8 @@ Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) 
 %% \end{enumerate}
 
 \subsection{Florida/Berkeley Contributions: \\Statistical Text Analytics}
-
+\label{sec:viterbi}
+\label{sec:mcmc}
 %Importance of statistical text analysis 
 The focus of the MADlib work at Florida and Berkeley has been to integrate statistical text analytics into a DBMS.
 In many domains, structured
@@ -1390,7 +1397,7 @@ techniques to find all mentions in text that approximately match the
 name of entity $X$. However, such a method is not as accurate as the
 state-of-the-art collective entity resolution algorithms based on
 statistical models, such as Conditional Random Fields
-(CRFs)~\cite{crftutorial}.
+(CRFs)~\cite{lafferty2001conditional}.
 % \fs{This section introduces CRFs (and other techniques) essentially without explanation, whereas in previous sections we even describe linear/logistic regression or convex optimization.}
 
 % our goal
@@ -1401,7 +1408,7 @@ statistical methods in SQL to support various text analysis tasks.  We
 use CRFs as the basic statistical model to perform more advanced text
 analysis. Similar to Hidden Markov Models (HMM)~cite{}, CRFs are a
 leading probabilistic model for solving many text analysis tasks,
-including POS, NER and ER~\cite{needed}. To support sophisticated text
+including POS, NER and ER~\cite{lafferty2001conditional}. To support sophisticated text
 analysis, we implement four key methods: text feature extraction, most-likely inference
 over a CRF (Viterbi), Markov-chain Monte Carlo inference, and
 approximate string matching. 
@@ -1486,7 +1493,7 @@ models.
 % \end{equation}}%
 % \fs{If we give the recursion formula, then all symbols used should be explained (IMHO). What are the meanings of $i$, $y$, $\lambda_k$, etc.?}
 
-Like any dynamic programming algorithm, the Viterbi algorithm is recursive. We experimented with two different implementations of macro-coordination over time. First, we chose to implement it using a combination of recursive SQL and window aggregate functions.  We discussed this implementation at some length in earlier work~\cite{Daisy1}. Our initial recursive SQL implementation only runs over PostgreSQL versions 8.4 and later; it does not run in Greenplum. Second, we chose to implement a Python UDF that uses iterations to drive the recursion in Viterbi. This iterative implementation runs over both PostgreSQL and Greenplum. In Greenplum, Viterbi can be run in parallel over different subsets of the document on a multi-core machine.
+Like any dynamic programming algorithm, the Viterbi algorithm is recursive. We experimented with two different implementations of macro-coordination over time. First, we chose to implement it using a combination of recursive SQL and window aggregate functions.  We discussed this implementation at some length in earlier work~\cite{DBLP:journals/pvldb/WangFGH10}. Our initial recursive SQL implementation only runs over PostgreSQL versions 8.4 and later; it does not run in Greenplum. Second, we chose to implement a Python UDF that uses iterations to drive the recursion in Viterbi. This iterative implementation runs over both PostgreSQL and Greenplum. In Greenplum, Viterbi can be run in parallel over different subsets of the document on a multi-core machine.
 
 \textbf{MCMC Inference:} Markov chain Monte Carlo (MCMC) methods are
 classical sampling algorithms that can be used to estimate probability
@@ -1495,7 +1502,7 @@ sampling and Metropolis-Hastings (MCMC-MH).
 % The iterative Gibbs
 % sampling algorithm is shown in Figure~\ref{Algo:Gibbs}.
 
-The MCMC algorithms involve iterative procedures where the current iteration depends on previous iterations. We used SQL window aggregates for macro-coordination in this case, to carry ``state'' across iterations to perform the Markov-chain process. This window function based implementation runs over PostgreSQL version 8.4 and later. We discussed this implementation at some length in recent work~\cite{Daisy2}.  We are currently working on integrating MCMC algorithms into Greenplum DBMS. We also plan to implement MCMC using Python UDF macro-coordination analogous to Section~\ref{sec:kmeans}, and compare the performance between the two implementations.
+The MCMC algorithms involve iterative procedures where the current iteration depends on previous iterations. We used SQL window aggregates for macro-coordination in this case, to carry ``state'' across iterations to perform the Markov-chain process. This window function based implementation runs over PostgreSQL version 8.4 and later. We discussed this implementation at some length in recent work~\cite{wang2011hybrid}.  We are currently working on integrating MCMC algorithms into Greenplum DBMS. We also plan to implement MCMC using Python UDF macro-coordination analogous to Section~\ref{sec:kmeans}, and compare the performance between the two implementations.
 
 % \ksn{Is Figure 4 really necessary?
 %    A question people would ask is this: Why don't we just use NLTK through PL/Python to access all the different  text analytics functionalities?}
@@ -1531,7 +1538,7 @@ building blocks to implement statistical text analysis
 methods. Leveraging this diverse set of tools and techniques that are
 already within the database allowed us to build a sophisticated text
 analysis engine that has comparable raw performance to off-the-shelf
-implementations, but runs natively in a DBMS close to the data~\cite{daisy1,daisy2}. 
+implementations, but runs natively in a DBMS close to the data~\cite{DBLP:journals/pvldb/WangFGH10,wang2011hybrid}. 
 
 %% Statistical methods can be implemented in a relational database
 %% efficiently. Prior work~\cite{} shows comparable performance between
@@ -1576,7 +1583,7 @@ SNOW~\cite{SNOW:Tierney:2009:SPC:1598913.1598918}. (2) We call the
 second group {\em framework-based approaches} whose goal is to provide
 a set of building blocks (individual machine-learning algorithms)
 along with library support for micro- and macro-programming to write the
-algorithms. Recent examples are Mahout~\cite{Mahout},
+algorithms. Recent examples are Mahout~\cite{mahout},
 Graphlab~\cite{Graphlab:conf/uai/LowGKBGH10}, and MADlib. One can view
 the work of the 90s of integrating the machine learning toolkits as an
 early framework-based approach.
@@ -1611,9 +1618,9 @@ deploying an analytic taks. Framework-based approaches differ in what
 the data-processing substrates. For example, MADlib is in in this
 category as it provides a library of functions over an RDBMS. The
 macro- and micro-programmin described earlier are examples of design
-templates. Apache Mahout~\cite{Mahout} goal is to provide an
+templates. Apache Mahout~\cite{mahout} goal is to provide an
 open-source machine learning library over Apache Hadoop. Currently,
-Mahoutq provides a library of machine learning algorithms and a
+Mahout provides a library of machine learning algorithms and a
 template to extend this library. At a lower level, the DryadLINQ large
 vector library provides the necessary data types to build analysis
 tasks (e.g., vectors) that are commonly used by machine learning
@@ -1690,7 +1697,7 @@ tolerance.
 MADlib v0.3 provides in-database implementations of a large number of widely-used statistical and analytic methods.  It is still in its early stages of development, but is already in use both at research universities and at customer sites.  In future we hope to foster more partnerships with academic institutions, database vendors, and customers.  In doing so, we hope to jointly pursue additional analytic methods prioritized by both research ``push'' and customer ``pull''.  We also look forward to ports across DBMSs.  
 
 One motivation for building MADlib was to fill a vacuum on the database side of the scalable analytics open-source ecosystem.
-In our experience, a parallel DBMS makes a fine dataflow substrate for implementing statistical and analytics methods at scale.  We have not yet undertaken comparisons with comparable projects over Hadoop like Mahout or SystemML.  From a marketplace perspective, such comparisons are not terribly important right now: customers currently desire both SQL and Hadoop-based analytics libraries simply because they have data in both environments.  So the best strategy currently is to foster work like MADlib and Mahout side-by-side.  From a technical perspective, performance comparisons would likely boil down to well-known (and likely temporary) tradeoffs between the current states of DBMSs and Hadoop: C vs. Java, pipelining vs. checkpointing, etc.~\cite{pavlo}.  These tradeoffs are not endemic, and one can expect them to level off over time as the various systems expand their feature sets.
+In our experience, a parallel DBMS makes a fine dataflow substrate for implementing statistical and analytics methods at scale.  We have not yet undertaken comparisons with comparable projects over Hadoop like Mahout or SystemML.  From a marketplace perspective, such comparisons are not terribly important right now: customers currently desire both SQL and Hadoop-based analytics libraries simply because they have data in both environments.  So the best strategy currently is to foster work like MADlib and Mahout side-by-side.  From a technical perspective, performance comparisons would likely boil down to well-known (and likely temporary) tradeoffs between the current states of DBMSs and Hadoop: C vs. Java, pipelining vs. checkpointing, etc.~\cite{pavlo2009comparison}.  These tradeoffs are not endemic, and one can expect them to level off over time as the various systems expand their feature sets.
 
 More interesting questions arise by focusing a level up, at the language layer.  MADlib's use of Python, SQL, and C++ abstractions for algebra reflect the realities of the SQL development ecosystem, rather than an idealized language design.  Perhaps a better approach would be to design a clean high-level language for machine learning, and compile down to the pragmatic mix that works on a contemporary DBMS.  SystemML and Scalops take this approach for MapReduce.  More interestingly, one could try to {\em cross-compile} such a language to multiple platforms---including not only the well-known parallel dataflow platforms (DBMSs, MapReduce) but also specialized machine learning engines like GraphLab that are architected quite differently.  Doing so would not only unify the open-source ecosystem for analytics around a single language, but could also highlight important tradeoffs between these very different architectures for parallelism.
 
