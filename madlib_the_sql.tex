@@ -145,7 +145,7 @@ morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,mor
  % \and
  % Gavin Sherry\\{\small Greenplum} \and
  Eugene Fratkin\\{\small Greenplum} \and
- Aleks Gorajek\\{\small Greenplum} \and
+ Aleksander Gorajek\\{\small Greenplum} \and
  Kee Siong Ng\\{\small Greenplum} \and
  Caleb Welton\\{\small Greenplum} \and
  Xixuan Feng \\ {\small U. Wisconsin} \and
@@ -717,7 +717,7 @@ Clustering, an iterative algorithm with large intermediate states spread across 
 
 In ordinary-least-squares (OLS) linear regression the goal is to fit a linear function to a set of points, with the objective of minimizing the sum of squared residuals. Formally, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \R$, and our goal is to find the vector $\widehat{\vec b}$ that minimizes $\sum_{i=1}^n (y_i - \langle \widehat{\vec b}, \vec x_i \rangle)^2$. OLS is one of the most fundamental methods in statistics. Typically, each $y_i$ is assumed to be an (independent) noisy measurement of $\langle \vec b, \vec x_i \rangle$, where $\vec b$ is an unknown but fixed vector and the noise is uncorrelated with mean 0 and unknown but fixed variance. Under these assumptions, $\widehat{\vec b}$ is the best linear unbiased estimate of~$\vec b$ (Gauss-Markov). Under additional assumptions (normality, independence), $\widehat{\vec b}$ is also the maximum-likelihood estimate. Letting $X$ denote the matrix whose rows are $\vec x_i^T$, and defining $\vec y := (y_1, \dots, y_n)^T$, it is well-known that the sum of squared residuals is minimized by $\widehat{\vec b} = (X^TX)^{-1}X^T \vec y$ (for exposition purposes we assume the full-rank case here, though this is not a requirement for MADlib).
 
-It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations \cite{DBLP:conf/nips/ChuKLYBNO06}---in extensible database terms, it can be done with a simple user-defined aggregate. The principal observation is this: $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point.  Summation is associative, so data parallelism virtually comes for free---we can compute the per-process subsums of the previous expressions locally in each process, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
+It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations in databases~\cite{ordonez-sigmod2000,ordonez-tkde10} and map-reduce \cite{DBLP:conf/nips/ChuKLYBNO06}.  In extensible database terms, this task can be done with a simple user-defined aggregate. The principal observation is this: $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point.  Summation is associative, so data parallelism virtually comes for free---we can compute the per-process subsums of the previous expressions locally in each process, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
 
 \subsubsection{MADlib Implementation}
 We assume that data points are stored as \texttt{(x DOUBLE PRECISION[], y DOUBLE PRECISION)} tuples. Linear regression is then implemented as a user-defined aggregate with a transition and final function roughly as in Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final}, respectively. (For compactness, we omitted finiteness checks and several output statistics in the example here.)
@@ -1220,7 +1220,7 @@ convex function we are considering, $f(x)$, has the form:
 \[ f(x)= \sum_{i=1}^N f_i (x) \]
 
 If each of the $f_i$ is convex, then so is
-$f$~\cite[pg.~38]{boyd:cvx}. Notice that all problems in Table 1 are
+$f$~\cite[pg.~38]{boyd:cvx}. Notice that all problems in Table~\ref{fig:objs:grads} are
 of this form: intuitively each of these models is finding some model
 (i.e., a vector $w$) that is scored on many different training
 examples. SGD leverages the above form to construct a rough estimate
@@ -1257,7 +1257,7 @@ Finally, the macro programming layer
 helps us test for convergence (which is implemented with either a
 python combination or C driver.) Using this approach, we were able to
 add in implementations of all the models in
-Figure~\ref{fig:objs:grads} in a matter of days.
+Table~\ref{fig:objs:grads} in a matter of days.
 
 In an upcoming paper we report initial experiments showing that our SGD based approach
 achieves higher performance than prior data mining tools for some
@@ -1307,7 +1307,7 @@ datasets~\cite{Re:sigmod12}.
 \label{fig:xsquare}
 \end{figure}
 
-\begin{figure}
+\begin{table}
 \centering
 {\small
 \begin{tabular}[t]{|l||l|}
@@ -1344,7 +1344,7 @@ Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) 
   % predict the labels. 
   }
 \label{fig:objs:grads}
-\end{figure}
+\end{table}
 
 %% \paragraph*{Future Work and Challenges} We plan to work on three challenges: (1) improving performance, (2) an infrastructure to make tools in MADlib statistically robust, and (3) SAS-style Model Management. 
 %% \begin{enumerate}
