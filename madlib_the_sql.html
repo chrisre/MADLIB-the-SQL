@@ -1,0 +1,106 @@
+<h1>MADlib: An Open-Source Library for Scalable Analytics</h1>
+
+<p>
+	<em>tl;dr: <a href='"http://madlib.net"'><strong>MADlib</strong></a> is an open-source library of scalable in-database algorithms for machine learning, statistics and other analytic tasks. MADlib is supported with people-power from Greenplum; researchers at Berkeley, Florida and Wisconsin are also contributing. The project recently released a <a href='"(http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-38.html"'>MADlib TR</a>, and is now welcoming additional community contributions.</em>
+</p>
+
+<h2>Warehousing &rarr; Science</h2>
+
+<p>
+	Back in 2008, I had the good fortune to fall in with a group of data professionals documenting new usage patterns in scalable analytics. It was an interesting team: a computational advertising analyst at a large social networking firm, a seasoned DBMS consultant formerly employed at a major Internet retailer, a pair of DBMS engine developers and an academic.
+</p>
+
+<p>
+	The usage patterns we were seeing represented a shift from accountancy to analytics—from the cautious record-keeping of "Data Warehousing" to the open-ended, predictive task of "Data Science". This shift was turning many Data Warehousing tenets on their heads. Rather than "<a href='"http://www.dwinfocenter.org/architect.html"'>architecting</a>" an integrated permanent record that repelled data until it was well-conditioned, the groups we observed were interested in fostering a data-centric computational "watering hole", where analysts could bring any kind of relevant data into a shared infrastructure, and experiment with ad-hoc integration and rich algorithmic analysis at very large scales.
+</p>
+
+<p>
+	In response to the dry <a href='"http://en.wikipedia.org/wiki/Three-letter_acronym"'>TLA</a>s of Data Warehousing, we dubbed this usage model <strong><i>MAD</i></strong>, to reflect
+</p>
+
+<ul>
+	
+	<li>the <em><strong>M</strong>agnetic</em> aspect of a promiscuously shared infrastructure</li>
+	
+	<li>the <em><strong>A</strong>gile</em> design patterns used for lightweight modeling, loading and iteration on data, and</li>
+	
+	<li>the <em><strong>D</strong>eep</em> statistical models and algorithms being used.</li>
+	
+</ul>
+
+<p>
+	We wrote the <a href='"http://www.vldb.org/pvldb/2/vldb09-219.pdf"'><em>MAD Skills</em></a>
+	paper in VLDB 2009 to capture these practices in broad terms.  The paper describes the usage patterns mentioned above in more detail.  It also includes a fairly technical section with a number of non-trivial analytics techniques adapted from the field, implemented via simple SQL excerpts.
+</p>
+
+<h2>MADlib (MAD Skills, the SQL)</h2>
+
+<p>
+	When we released the MAD Skills paper, many people were interested not only in its design aspects, but also in the promise of sophisticated statistical methods in SQL. This interest came from multiple directions: DBMS customers were requesting it of consultants and vendors, and academics were increasingly publishing papers on in-database analytics. What was missing was a software framework to harness the energy of the community, and connect the various interested constituencies.
+</p>
+
+<p>
+	To this end, a group formed to build <a href='"http://madlib.net"'><strong>MADlib</strong></a>, a free, open-source library of SQL-based algorithms for machine learning, statistics, and related analytic tasks. The methods in MADlib are designed both for in- and out-of-core execution, and for the shared-nothing, "scale-out" parallelism offered by modern parallel database engines, ensuring that computation is done close to the data. The core functionality is written in declarative SQL statements, which orchestrate data movement to and from disk, and across networked machines. Single-node inner loops take advantage of SQL extensibility to call out to high-performance math libraries (currently, <a href='"http://eigen.tuxfamily.org/"'>Eigen</a>) in user-defined scalar and aggregate functions. At the highest level, tasks that require iteration and/or structure definition are coded in Python driver routines, which are used only to kick off the data-rich computations that happen within the database engine.
+</p>
+
+<p>
+	The primary goal of the MADlib open-source project is to accelerate innovation and technology transfer in the Data Science community via a shared library of scalable in-database analytics, much as the <a href='"http://cran.r-project.org/"'>CRAN library</a> serves the R community. Unlike CRAN, which is customized to the R analytics tool, we hope that MADlib's grounding in standard SQL can result in community ports to a variety of parallel database engines.
+</p>
+
+<h2>Open-Source Algorithms in Parallel DBMSs?</h2>
+
+<p>
+The state of scalable analytics today depends very much on who you talk to.
+When I talk about MADlib with academics and employees at Internet companies, they often ask why anyone would write an analytics library in SQL rather than <a href='"http://hadoop.apache.org"'>Hadoop</a> MapReduce.  By contrast, when I talk with colleagues in enterprise software, they typically appreciate the use of SQL and mature DBMS infrastructure, but often ask why any vendor would support an open source effort like MADlib.  There have been a few people—notably some collaborators at Greenplum—who share my view that the combination of SQL-compliance and open source is a natural and important catalyst for the Data Science community.
+</p>
+<p>
+The motivation for considering parallel databases comes from both the database market and technology issues.	There is a large and growing installed base of massively parallel commercial DBMSs in industry, fueled in part by a recent wave of startup acquisitions. Meanwhile, it is no surprise to database researchers that a massively parallel DBMS is a powerful platform for dataflow programming of sophisticated analytic algorithms. Research on sophisticated in-database analytics has been growing in recent years, in part as an offshoot of work on Probabilistic Databases. Education is hopefully shifting as well. For example, in my own <a href='"https://sites.google.com/a/cs.berkeley.edu/cs186-s12/"'>CS186</a>
+	database course this spring, the students not only wrote traditional SQL queries, they also had to implement a non-trivial social network analysis algorithm in SQL (<a href='"http://github.com/cs186/sp12/blob/master/hw2/README.md"'>betweenness centrality</a>).
+</p>
+
+<p>
+	The open-source nature of MADlib represents a serious commitment by the entire team, and differs from the proprietary approaches traditionally associated with DBMS vendors. The decision to go open-source was motivated by a number of goals, including:
+</p>
+
+<ul>
+	
+	<li><strong>The benefits of customization</strong>: Statistical methods are rarely used as turnkey solutions. It's typical for data scientists to want to modify and adapt canonical models and methods to their own purposes. Open source has major advantages in that context, and enables useful modifications to be shared back to the benefit of the entire community.</li>
+	
+	<li><strong>Closing the research-to-adoption loop</strong>: Very few traditional database customers have the capacity for significant in-house research into computing or data science. On the other hand, it is hard for academics doing computing research to understand and influence the way that analytic processes are done in the field. An open-source project like MADlib has the potential to connect these constituencies in a concrete way, to the benefit of all concerned.</li>
+	
+	<li><strong>Leveling the playing field, encouraging innovation</strong>: Many DBMS vendors offer various proprietary data mining toolkits consisting of textbook algorithms. It is hard to assess their relative merits. Meanwhile, Internet companies have been busily building machine learning code at scale for Hadoop and related platforms, but their code is not well-packaged for reuse (a fact recently confirmed for me by leaders at two major Internet companies.) The goal of MADlib is to fill this gap in the database context: offset the <a href='"http://en.wikipedia.org/wiki/Fear,_uncertainty_and_doubt"'>FUD</a> of proprietary toolkits, bring a baseline level of algorithmic sophistication to users of database analytics, and help foster a connected community for innovation and technology transfer.</li>
+	
+</ul>
+
+<h2>MADlib Status</h2>
+
+<p>
+	MADlib is still young, at Version 0.3. The initial versions focused on establishing infrastructure and a baseline of textbook and some advanced methods; this initial suite actually covers a fair bit of ground (<a href="#table1">Table 1</a>). Most methods were chosen because they were frequently requested from customers we met through contacts at Greenplum. More recently, we made a point of validating MADlib as a research vehicle, by fostering a small number of university groups who were working in the area to experiment with the platform and get their code disseminated. Profs. Chris Ré at Wisconsin and Daisy Wang at Florida have written up their work in a <a href='"http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-38.html"'>MADLib tech report</a> that expands upon this post.
+</p>
+
+<a name="table1">
+<p>
+	<img src="methods.png" width='350'>
+</p>
+
+<p>
+	MADlib is currently ported to PostgreSQL (single-node, open-source) and Greenplum (shared-nothing parallel, commercial). Greenplum inherits the PostgreSQL extensibility interfaces almost completely, so these two ports were easy to pursue simultaneously in the early days of the project. Another attraction of Greenplum is that it offers a <a href='""'>free download of a massively parallel DBMS for researchers</a>, so there is no limitation on scaling experiments. (This is suprisingly unusual: most DBMS vendors still only advertise free trial downloads of "crippleware" that artificially limits database size or the number of nodes. I would imagine that market forces will change this story relatively soon.)
+</p>
+
+<p>
+	MADlib is hosted publicly at <a href='"http://github.com/madlib/madlib"'>github</a>, and readers are encouraged to browse the code and documentation via the <a href='"http://madlib.net"'>MADlib website</a>. The initial MADlib codebase reflects contributions from both industry (a team at Greenplum) and academia (Berkeley, Wisconsin, Florida). Project oversight and Quality Assurance efforts have been contributed by Greenplum. Our <a href='"http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-38.html"'>MADlib TR</a> expands on the architecture and status, and also includes extensive discussion of related work.
+</p>
+
+<h2>Pitch in!</h2>
+
+<p>
+	At this time, MADlib is ready to consider contributions from additional parties, including both new methods and ports to new platforms. Like any serious open-source project, contributions will have to be managed carefully to maintain code quality. I hope that more researchers will find it worthwhile to contribute serious code to the MADlib effort. It's a bit more work than getting an algorithm ready to run experiments in a paper, but it's really satisfying to develop and refine production-quality open-source code, and get it delivered to end-users. If you are doing research on scalable analytic methods, consider going the extra mile and contributing your code to the MADlib effort.
+</p>
+
+<p>
+	For more information on MADlib, please see the website at <a href='"http://madlib.net"'>http://madlib.net</a>.
+</p>
+
+<p>
+	<em>Thanks to Chris Ré, Florian Schoppmann and Daisy Wang for their help writing up the recent <a href='"http://www.eecs.berkeley.edu/Pubs/TechRpts/2012/EECS-2012-38.html"'>MADlib TR</a> that this post excerpts, and to Azza Abouzied, Peter Bailis, and Neil Conway for feedback on this version.</em>
+</p>
