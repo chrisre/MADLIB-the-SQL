@@ -159,7 +159,7 @@ morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,mor
 \maketitle
 
 \begin{abstract}
-  MADlib is a free, open source library of in-database analytic methods.
+  MADlib is a free, open-source library of in-database analytic methods.
   It provides an evolving suite of SQL-based algorithms for machine
   learning, data mining and statistics that run at scale within a
   database engine, with no need for data import/export to other tools.
@@ -170,7 +170,7 @@ morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,mor
 
   In this paper we introduce the MADlib project, including the
   background that led to its beginnings, and the motivation for its
-  open source nature.  We provide an overview of the library's
+  open-source nature.  We provide an overview of the library's
   architecture and design patterns, and provide a description
   of various statistical methods in that context.  We include performance and speedup results of a core design pattern from one of those methods over the Greenplum parallel DBMS on a modest-sized test cluster.    We then report on two 
   initial efforts at incorporating academic research into MADlib, which is one of the 
@@ -300,7 +300,7 @@ ports to new platforms.
 % \end{table*}
 
 \section{Goals of the Project} 
-The primary goal of the MADlib open source project is to accelerate
+The primary goal of the MADlib open-source project is to accelerate
 innovation and technology transfer in the Data Science community via a shared
 library of scalable in-database analytics, much as the CRAN library
 serves the R community~\cite{ripley2001r}.  Unlike CRAN, which is
@@ -352,7 +352,7 @@ that an analyst needs to perform, but the first, ``S'' step makes less and less 
 % CUSTOMERS)
 
 Driven in part by this observation, momentum has been gathering around efforts to develop scalable full-dataset analytics. One popular alternative is to
-push the statistical methods directly into new parallel processing platforms---notably, Apache Hadoop. For example, the open source Mahout project
+push the statistical methods directly into new parallel processing platforms---notably, Apache Hadoop. For example, the open-source Mahout project
 aims to implement machine learning tools within Hadoop, harnessing
  interest in both academia and industry~\cite{DBLP:conf/nips/ChuKLYBNO06,mahout}. This is
 certainly a plausible path to a solution, and Hadoop is being advocated as a promising approach even by major database players, including EMC/Greenplum, Oracle and Microsoft.
@@ -411,21 +411,21 @@ encourage this.  For these cases, it would be helpful to push statistical method
 \subsection{Why Open Source?}
 
 
-From the beginning, MADlib was designed as an open source project with
+From the beginning, MADlib was designed as an open-source project with
 corporate backing, rather than a closed-source corporate effort with
 academic consulting. This decision was motivated by a number of
 factors, including the following:
 
 \begin{itemize}
-    \item \textbf{The benefits of customization}: Statistical methods are rarely used as turnkey solutions.  As a result, it is common for data scientists to want to modify and adapt canonical models and methods (e.g., regression, classification, clustering) to their own purposes.  This is a very tangible benefit of open source libraries over traditional closed-source packages. Moreover, in an open source community there is a process and a set of positive incentives for useful modifications to be shared back to the benefit of the entire community.
-    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open source community adopt and improve their software.  open source efforts can also be synergistic for vendors that sell commercial software, as evidenced by companies like EMC/Greenplum, Oracle, Microsoft and others beginning to provide Apache Hadoop alongside their commercial databases.  Most IT shops today run a mix of open source and proprietary software, and many software vendors are finding it wise to position themselves intelligently in that context.  Meanwhile, for most database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.  For these vendors, involvement and expertise with an open source library like MADlib is an opportunity to expand their functionality and service offerings. 
+    \item \textbf{The benefits of customization}: Statistical methods are rarely used as turnkey solutions.  As a result, it is common for data scientists to want to modify and adapt canonical models and methods (e.g., regression, classification, clustering) to their own purposes.  This is a very tangible benefit of open-source libraries over traditional closed-source packages. Moreover, in an open-source community there is a process and a set of positive incentives for useful modifications to be shared back to the benefit of the entire community.
+    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community adopt and improve their software.  Open-source efforts can also be synergistic for vendors that sell commercial software, as evidenced by companies like EMC/Greenplum, Oracle, Microsoft and others beginning to provide Apache Hadoop alongside their commercial databases.  Most IT shops today run a mix of open source and proprietary software, and many software vendors are finding it wise to position themselves intelligently in that context.  \fs{Reviewer~2 wanted this section shorter, and the next sentence is, IMHO, indeed an instance where he is right. The sentence raises more questions (why is it an advantage if a Greenplum-sponsored project helps competitors?) than it answers.} Meanwhile, for most database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.  For these vendors, involvement and expertise with an open-source library like MADlib is an opportunity to expand their functionality and service offerings.
     %\fs{As a reader I ask ask myself here: Does Greenplum have competency in statistical methods? If so, why do they want to let competitors benefit from that? The argument would be plausible if MADlib was a joint venture, but leaves open questions as a unilateral move by Greenplum.}
 %MADlib *is* a joint venture, and that's the point -- it's a collaboration between industry and research.  Wouldn't have happened had I not pushed it, and had Greenplum not supported it.
     \item \textbf{Closing the research-to-adoption loop}:  Very few traditional database customers have the capacity to develop significant in-house research into computing or data science. 
     % \fs{Again, one would assume that the Greenplum side of MADlib could not care less if other companies are lacking certain capacities.} 
     % \jmh{Clarified to make sure that I'm referring to DBMS customers, not vendors.}
-    On the other hand, it is hard for academics doing computing research to understand and influence the way that analytic processes are done in the field.  An open source project like MADlib has the potential to connect academic researchers not only to industrial software vendors, but also directly to the end-users of analytics software.  This can improve technology transfer from academia into practice without requiring database software vendors to serve as middlemen.  It can similarly enable end-users in specific application domains to influence the research agenda in academia.
-    \item \textbf{Leveling the playing field, encouraging innovation}:  Over the past two decades, database software vendors have developed proprietary data mining toolkits consisting of textbook algorithms.  It is hard to assess their relative merits.  Meanwhile, other communities in machine learning and internet advertising have also been busily innovating, but their code is typically not well packaged for reuse, and the code that is available was not written to run in a database system.  None of these projects has demonstrated the vibrancy and breadth we see in the open source community surrounding R and its CRAN package. The goal of MADlib is to fill this gap: 
+    On the other hand, it is hard for academics doing computing research to understand and influence the way that analytic processes are done in the field.  An open-source project like MADlib has the potential to connect academic researchers not only to industrial software vendors, but also directly to the end-users of analytics software.  This can improve technology transfer from academia into practice without requiring database software vendors to serve as middlemen.  It can similarly enable end-users in specific application domains to influence the research agenda in academia.
+    \item \textbf{Leveling the playing field, encouraging innovation}:  Over the past two decades, database software vendors have developed proprietary data mining toolkits consisting of textbook algorithms.  It is hard to assess their relative merits.  Meanwhile, other communities in machine learning and internet advertising have also been busily innovating, but their code is typically not well packaged for reuse, and the code that is available was not written to run in a database system.  None of these projects has demonstrated the vibrancy and breadth we see in the open-source community surrounding R and its CRAN package. The goal of MADlib is to fill this gap: 
      %     
      % A robust open source project like MADlib 
      % \fs{We should find the right mix of self-confidence and at the same time acknowledging that MADlib is still at an early stage and beta in many respects.} 
@@ -434,29 +434,29 @@ factors, including the following:
      bring the database community up to a baseline level of competence on standard statistical algorithms, remove opportunities for proprietary \textit{FUD}, and help focus a large community on innovation and technology transfer.
 \end{itemize}
 
-\subsection{A Model for Open Source Collaboration}
+\subsection{A Model for Open-Source Collaboration}
 
 The design of MADlib comes at a time when the connections between
-open source software and academic research seem particularly frayed.
+open-source software and academic research seem particularly frayed.
 MADlib is designed in part as an experiment in binding these
 communities more tightly, to face current realities in software
 development.
 
-In previous decades, many important open source packages originated in universities and evolved into significant commercial products.  Examples include the Ingres and Postgres database systems, the BSD UNIX and Mach operating systems, the X Window user interfaces and the Kerberos authentication suite.  These projects were characterized by aggressive application of new research ideas, captured in workable but fairly raw public releases that matured slowly with the help of communities outside the university.  While all of the above examples were incorporated into commercial products, many of those efforts emerged years or decades after the initial open source releases, and often with significant changes.
+In previous decades, many important open-source packages originated in universities and evolved into significant commercial products.  Examples include the Ingres and Postgres database systems, the BSD UNIX and Mach operating systems, the X Window user interfaces and the Kerberos authentication suite.  These projects were characterized by aggressive application of new research ideas, captured in workable but fairly raw public releases that matured slowly with the help of communities outside the university.  While all of the above examples were incorporated into commercial products, many of those efforts emerged years or decades after the initial open-source releases, and often with significant changes.
 
-Today, we expect successful open source projects to be quite mature,
+Today, we expect successful open-source projects to be quite mature,
 often comparable to commercial products.  To achieve this level of
-maturity, most successful open source projects have one or more major
+maturity, most successful open-source projects have one or more major
 corporate backers who pay some number of committers and provide
 professional support for Quality Assurance (QA).  This kind of investment is typically
 made in familiar software packages, not academic research projects.  Many of the most popular examples---Hadoop, Linux,
-OpenOffice---began as efforts to produce open source alternatives to well-identified,
+OpenOffice---began as efforts to produce open-source alternatives to well-identified,
 pre-existing commercial efforts. 
 %\fs{I think Linux is too big a project to say it does not contain research. This paragraph also sounds a bit too negative to me. Like ``Today's OSS consists mainly of boring rip-offs of commercial products.'' 
 % \jmh{Moderated somewhat.  I didn't mean that Linux doesn't contain research, but rather that it wasn't a research project at base.  And yes -- today's OSS projects do mostly consist of boring rip-offs of stuff from industry.}
 % While not completely untrue, there is more to the story.}
 
-MADlib is making an explicit effort to explore a new model for industry support of academic research via open source.  Many academic research projects are generously supported by financial grants and gifts from companies.  In MADlib, the corporate donation has largely consisted of a commitment to allocate significant professional software engineering time to bootstrap an open source sandbox for academic research and tech transfer to practice. 
+MADlib is making an explicit effort to explore a new model for industry support of academic research via open source.  Many academic research projects are generously supported by financial grants and gifts from companies.  In MADlib, the corporate donation has largely consisted of a commitment to allocate significant professional software engineering time to bootstrap an open-source sandbox for academic research and tech transfer to practice. 
 % \fs{This paragraph sounds as if MADlib is contrasting, say, Linux here in that (a) it contains cutting-edge research and (b) corporate donations consist mainly of labor instead of money. I do not see that MADlib is singular in that respect. Think of what, e.g., RedHat does, or in fact any company that makes money with GPL'd software.} 
 % \jmh{The contrast in the paragraph is pretty clear: as opposed to writing somebody like Joe Hellerstein a check, we offer him an engineering team.  I didn't say anything about Linux.}
 This leverages a strength of industry that is not easily replicated by government and other non-profit funding sources.  Companies can recruit high-quality, experienced software
@@ -464,7 +464,7 @@ engineers with the attraction of well-compensated, long-term career
 paths.  Equally important, software shops can offer an entire software
 engineering pipeline that cannot be replicated on campus:
 this includes QA processes and QA engineering staff.  The hope is that the corporate staffing of research projects like MADlib can enable more impactful
-academic open source research, and speed technology transfer to industry. %\fs{Linux is used and advanced by lots of students and academics, and there are companies like RedHat, IBM, etc.}
+academic open-source research, and speed technology transfer to industry. %\fs{Linux is used and advanced by lots of students and academics, and there are companies like RedHat, IBM, etc.}
 %\jmh{Well sure, and Windows is also used and tweaked by lots of academics.  I don't see many companies bootstrapping new research projects for academia like MADlib; they usually just write checks.}
 
 \subsection{MADlib Status}
@@ -488,7 +488,7 @@ to validate MADlib as a research vehicle, by fostering a small number of  univer
 The core of traditional SQL---\texttt{SELECT...} \texttt{FROM...} \texttt{WHERE}... \texttt{GROUP BY}---is
 quite a powerful harness for orchestrating bulk data processing across
 one or many processors and disks.  It is also a portable, native
-language supported by a range of widely-deployed open source and
+language supported by a range of widely-deployed open-source and
 commercial database engines.  This makes SQL an attractive
 framework for writing data-intensive programs.  Ideally, we would like
 MADlib methods to be written entirely in straightforward and portable
@@ -496,7 +496,7 @@ SQL. Unfortunately, the portable core of ``vanilla'' SQL is often not
 quite enough to express the kinds of algorithms needed for advanced
 analytics.
 
-Many statistical methods boil down to linear algebra expressions over
+Many statistical methods boil down to linear-algebra expressions over
 matrices.  For relational databases to operate over very large
 matrices, this presents challenges at two scales.  At a macroscopic
 scale, the matrices must be intelligently partitioned into chunks that
@@ -504,9 +504,9 @@ can fit in memory on a single node.  Once partitioned, the pieces can
 be keyed in such a way that SQL constructs can be used to orchestrate
 the movement of these chunks into and out of memory across one or many
 machines.  At a microscopic scale, the database engine must invoke
-efficient linear algebra routines on the pieces of data it gets in
+efficient linear-algebra routines on the pieces of data it gets in
 core.  To this end it has to have the ability to very quickly invoke
-well-tuned linear algebra methods.
+well-tuned linear-algebra methods.
 
 We proceed to discuss issues involved at both of these levels in a bit more detail, and solutions we chose to implement in MADlib.
 \subsection{Macro-Programming (Orchestration)}
@@ -531,7 +531,7 @@ computation.
 
 The most basic building block in the macro-programming of MADlib is the use of user-defined aggregates (UDAs). In general, aggregates---and the related window functions---are the natural way in SQL to implement mathematical functions that take as input the values of an arbitrary number of rows (tuples). DBMSs typically implement aggregates as data-parallel streaming algorithms. And there is a large body of recent work on online learning algorithms and model-averaging techniques that fit the computational model of aggregates well (see, e.g., \cite{Zinkevich10}).
 
-Unfortunately, extension interfaces for user-defined aggregates vary widely across vendors and open source systems.
+Unfortunately, extension interfaces for user-defined aggregates vary widely across vendors and open-source systems.
 % , and many vendors do  SQL standard does not prescribe an extension interface for user-defined aggregates \jmh{we'd better triple-check that} \fs{I'll have another look. Can somebody else check, too?}, and they are typically implemented using vendor-specific APIs. 
 Nonetheless, the aggregation paradigm (or in functional programming terms, ``fold'' or ``reduce'') is natural and ubiquitous, and we expect the basic algorithmic patterns for user-defined aggregates to be very portable. In most widely-used DBMSs (e.g., in PostgreSQL, MySQL, Greenplum, Oracle, SQL Server, Teradata), a user-defined aggregate consists of a well-known pattern of two or three user-defined functions:
 \begin{enumerate}
@@ -647,7 +647,7 @@ as a Python library that ships with MADlib and provides useful programmer APIs a
 In addition to doing the coarse-grained orchestration of chunks, the
 database engine must very efficiently invoke the single-node code that
 performs arithmetic on those chunks.  For UDFs that operate at the row level (perhaps called multiple times per row), the standard practice is to implement them in C or C++. When computing dense matrix operations, these functions would
-make native calls to an open source library like LAPACK~\cite{laug} or Eigen~\cite{eigenweb}.
+make native calls to an open-source library like LAPACK~\cite{laug} or Eigen~\cite{eigenweb}.
 
 Sparse
 matrices are not as well-handled by standard math libraries, and require
@@ -667,11 +667,11 @@ and arrays. We turn to this issue next.
 % Moreover, for maintainability as well as portability it is best to separate database logic and APIs from mathematical code.  We therefore provide a C++ abstraction layer in MADlib for writing performance-critical inner loops, which we describe next. \fs{The last two sentences here are now redundant with the first two sentences in the next paragraph. I would just remove everything between `Moreover' and `describe next'.}
 
 \subsection{A C++ Abstraction Layer for UDFs} \label{sec:cplusplus}
-There are a number of complexities involved in writing C or C++-based user-defined functions over a legacy DBMS like PostgreSQL, all of which can get in the way of maintainable, portable application logic.  This complexity can be especially frustrating for routines whose pseudocode amounts to a short linear algebra expression that {\em should} result in a compact implementation. 
+There are a number of complexities involved in writing C or C++-based user-defined functions over a legacy DBMS like PostgreSQL, all of which can get in the way of maintainable, portable application logic.  This complexity can be especially frustrating for routines whose pseudocode amounts to a short linear-algebra expression that {\em should} result in a compact implementation. 
 % \fs{I don't understand the last sentence.}  
 MADlib provides a C++ abstraction layer both to ease the burden of writing high-performance UDFs, and to encapsulate DBMS-specific logic inside the abstraction layer, rather than spreading the cost of porting across all the UDFs in the library.  In brief, the MADlib C++ abstraction provides three classes of functionality: type bridging, resource management shims, and math library integration.  
 
-Type bridging is provided via an encapsulated mapping of C++ types and methods to database types and functions.  UDFs can be written with standard C++ atomic types, as well as the vector and matrix types that are native to a high performance linear algebra library.  (We have successfully layered multiple alternative libraries under this interface, and are currently using Eigen~\cite{eigenweb}).  The translation to and from database types (including composite types like \texttt{double precision[]} for vectors) is handled by the abstraction layer.  Similarly, higher-order templated functions in C++ can be mapped to the appropriate object IDs of UDFs in the database, with the abstraction layer taking care of looking up the function in the database catalog, verifying argument lists, ensuring type-safety, etc.
+Type bridging is provided via an encapsulated mapping of C++ types and methods to database types and functions.  UDFs can be written with standard C++ atomic types, as well as the vector and matrix types that are native to a high-performance linear-algebra library.  We have successfully layered multiple alternative libraries under this interface, and are currently using Eigen~\cite{eigenweb} (see Section~\ref{sec:performance} for performance results and lessons learned about integrating linear-algebra libraries in a RDBMS).  The translation to and from database types (including composite or array types like \texttt{double precision[]} for vectors) is handled by the abstraction layer.  Similarly, higher-order functions in C++ can be mapped to the appropriate object IDs of UDFs in the database, with the abstraction layer taking care of looking up the function in the database catalog, verifying argument lists, ensuring type-safety, etc.
 
 %  One is the mapping of C++ language types and function pointers to database types and DBMS-registered functions.  A second is the correct use of DBMS facilities ordinarily associated with operating-system or language-level standard libraries: memory management, exception handling, signal handling and so on.  Finally, the key goal in MADlib is for mathematical expressions to take advantage of the expressivity and performance tuning of mature linear algebra libraries.  The typical coding style for PostgreSQL extensions makes all these issues explicit, verbose, and easy to get wrong.  We cover each of these three topics briefly.
 % 
@@ -694,7 +694,7 @@ The second aspect of the C++ abstraction layer is to provide a safe and robust s
 % 
 % . For instance, PostgreSQL maintains a hierarchy of memory contexts: When a query is started, a new memory context is created and all transient memory allocations are supposed to occur within this context. When the query ends, disposing of the query context provides a simple and effective way of garbage collection. Our C++ abstraction layer makes sure that such modi operandi are followed. On the other hand, the C++ abstraction layer also facilitates writing C++ code with a well-defined interface. This is particularly necessary if (as is typically the case) a DBMS only provides a C plugin interface: In that case it is important that exceptions, signals, etc. to not cross runtime boundaries.
 
-Finally, by incorporating proven third-party libraries, the C++ abstraction layer makes it easy for MADlib developers to write correct and performant code.  For example, the Eigen linear algebra library contains well-tested and well-tuned code that makes use of the SIMD instruction sets (like SSE) found in today's CPUs. Likewise, the abstraction layer itself has been tuned for efficient value marshalling, and code based on it will automatically benefit from future improvements. 
+Finally, by incorporating proven third-party libraries, the C++ abstraction layer makes it easy for MADlib developers to write correct and performant code.  For example, the Eigen linear-algebra library contains well-tested and well-tuned code that makes use of the SIMD instruction sets (like SSE) found in today's CPUs. Likewise, the abstraction layer itself has been tuned for efficient value marshalling, and code based on it will automatically benefit from future improvements. 
 % Some examples include: All type bridges are aware of mutable and immutable objects and avoid making copies whenever possible. DBMS-catalogue lookups are minimized by caching.  
 By virtue of being a template library, the runtime and abstraction overhead is reduced to a minimum.
 
@@ -705,7 +705,7 @@ As an illustration of the high-level code one can write over our abstraction lay
 
 \section{Examples}
 
-To illustrate the above points, we look at three different algorithmic scenarios.  The first is Linear Regression using Ordinary Least Squares (OLS), which is an example of a widely useful, simple single-pass aggregation technique.  The second is binary Logistic Regression, another widely used technique, but one that employs an iterative algorithm.  Finally, we look at $k$-means 
+To illustrate the above points, we look at three different algorithmic scenarios.  The first is Linear Regression using Ordinary Least Squares (OLS), which is an example of a widely useful, simple single-pass aggregation technique.  The second is binary Logistic Regression, another widely used technique, but one that employs an iterative algorithm.  Finally, we look at $k$-Means 
 % \fs{changed this from `K-Means' to `$k$-means' because that's what I used everywhere else.} 
 Clustering, an iterative algorithm with large intermediate states spread across machines.
 
@@ -717,7 +717,7 @@ Clustering, an iterative algorithm with large intermediate states spread across 
 
 In ordinary-least-squares (OLS) linear regression the goal is to fit a linear function to a set of points, with the objective of minimizing the sum of squared residuals. Formally, we are given points $(\vec x_1, y_1), \dots, (\vec x_n, y_n)$, where $\vec x_i \in \R^d$ and $y_i \in \R$, and our goal is to find the vector $\widehat{\vec b}$ that minimizes $\sum_{i=1}^n (y_i - \langle \widehat{\vec b}, \vec x_i \rangle)^2$. OLS is one of the most fundamental methods in statistics. Typically, each $y_i$ is assumed to be an (independent) noisy measurement of $\langle \vec b, \vec x_i \rangle$, where $\vec b$ is an unknown but fixed vector and the noise is uncorrelated with mean 0 and unknown but fixed variance. Under these assumptions, $\widehat{\vec b}$ is the best linear unbiased estimate of~$\vec b$ (Gauss-Markov). Under additional assumptions (normality, independence), $\widehat{\vec b}$ is also the maximum-likelihood estimate. Letting $X$ denote the matrix whose rows are $\vec x_i^T$, and defining $\vec y := (y_1, \dots, y_n)^T$, it is well-known that the sum of squared residuals is minimized by $\widehat{\vec b} = (X^TX)^{-1}X^T \vec y$ (for exposition purposes we assume the full-rank case here, though this is not a requirement for MADlib).
 
-It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations in databases~\cite{ordonez-sigmod2000,ordonez-tkde10} and map-reduce \cite{DBLP:conf/nips/ChuKLYBNO06}.  In extensible database terms, this task can be done with a simple user-defined aggregate. The principal observation is this: $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point.  Summation is associative, so data parallelism virtually comes for free---we can compute the per-process subsums of the previous expressions locally in each process, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
+It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations in databases~\cite{ordonez-sigmod2000,ordonez-tkde10} and map-reduce \cite{DBLP:conf/nips/ChuKLYBNO06}.  In extensible-database terms, this task can be done with a simple user-defined aggregate. The principal observation is this: $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point.  Summation is associative, so data parallelism virtually comes for free---we can compute the per-process subsums of the previous expressions locally in each process, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
 
 \subsubsection{MADlib Implementation}
 We assume that data points are stored as \texttt{(x DOUBLE PRECISION[], y DOUBLE PRECISION)} tuples. Linear regression is then implemented as a user-defined aggregate with a transition and final function roughly as in Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final}, respectively. (For compactness, we omitted finiteness checks and several output statistics in the example here.)
@@ -746,7 +746,7 @@ Note that the \texttt{linregr} Python UDF produces a composite record type in th
   %   \begin{cppcode}
   \begin{lstlisting}
 AnyType
-linregr_transition::run(AnyType &args) {
+linregr_transition::run(AnyType& args) {
     // Transition state is a class that wraps an array.
     // We expect a mutable array. If DBMS allows
     // modifications, copying will be avoided.
@@ -757,8 +757,8 @@ linregr_transition::run(AnyType &args) {
     // Vector of independent variables wraps an immutable
     // array (again, no unnecessary copying). This maps
     // to an Eigen type
-    HandleMap<const ColumnVector> x
-        = args[2].getAs<ArrayHandle<double> >();
+    MappedColumnVector x
+        = args[2].getAs<MappedColumnVector>();
     
     if (state.numRows == 0)
         // The first row determines the number 
@@ -789,10 +789,10 @@ linregr_transition::run(AnyType &args) {
 % \begin{code}
   \begin{lstlisting}
 AnyType
-linregr_final::run(AnyType &args) {
+linregr_final::run(AnyType& args) {
     // Immutable array: Array will never be copied
-    LinRegrTransitionState<
-        ArrayHandle<double> > state = args[0];
+    LinRegrTransitionState<ArrayHandle<double> > state
+    		= args[0];
 
     // The following is a MADlib class that wraps Eigen's
     // solver for self-adjoint matrices.
@@ -804,7 +804,7 @@ linregr_final::run(AnyType &args) {
         = decomposition.pseudoInverse();
     // Let backend allocate array for coefficients so to
     // avoid copying on return (if supported by DBMS).
-    HandleMap<ColumnVector> coef(
+    MutableMappedColumnVector coef(
         allocateArray<double>(state.widthOfX));
     coef.noalias() = inverse_of_X_transp_X
         * state.X_transp_Y;
@@ -929,13 +929,13 @@ In the transition function, we first compute the centroid that the current point
 
 Unfortunately, in order to check the convergence criterion that no or only few points got reassigned, we have to do two closest-centroid computations per point and iteration: First, we need to compute the closest centroid in the previous iteration and then the closest one in the current iteration. If we stored the closest points explicitly, we could avoid half of the closest-centroid calculations.
 
-We can store points in a table called \texttt{points} that has a \texttt{coords} attribute containing the points' coordinates and has a second attribute for the current \texttt{centroid\_id} for the point.  The iteration state stores the centroids' positions in an array of points called \texttt{centroids}.  MADlib provides a UDF \texttt{closest\_point(a,b)} that determines the point in array \texttt{a} that is closest to \texttt{b}.  Thus, we can make the point-to-centroid assignments explicit using the following SQL:
+We can store points in a table called \texttt{points} that has a \texttt{coords} attribute containing the points' coordinates and has a second attribute for the current \texttt{centroid\_id} for the point.  The iteration state stores the centroids' positions in a matrix called \texttt{centroids}.  MADlib provides a UDF \texttt{closest\_column(a,b)} that determines the column in a matrix \texttt{a} that is closest to vector \texttt{b}.  Thus, we can make the point-to-centroid assignments explicit using the following SQL:
 
 \begin{scriptsize}
   \lstset{language=SQL, numbers=none, frame=none}
 \begin{lstlisting}
 UPDATE points
-SET centroid_id = closest_point(centroids, coords)
+SET centroid_id = closest_column(centroids, coords)
 \end{lstlisting}
 \end{scriptsize}
 
@@ -981,14 +981,14 @@ The pattern of updating temporary state is made a bit more awkward in PostgreSQL
 %     \end{scriptsize}%
 % We remark that the dependent variable here is the boolean condition \texttt{(crimerat >= 110)}, and we include a constant 1 among the independent variables to determine the intercept in the logistic regression.
 
-\subsection{Infrastructure Performance Trends}
+\subsection{Infrastructure Performance Trends} \label{sec:performance}
 % \ksn{ I think we're going to cop a lot criticism on this preliminary performance testing.
 %  The whole point of the in-database approach is to scale to large datasets, and we don't even attempt to solve a large enough linear regression problem that doesn't fit completely in memory?   Very hard to argue against that...}
 % \fs{I addressed that point and hoped the message would be: We have perfect scalability for aggregates, and disk I/O will not affect scalability. It would hide the C++ AL overhead in our measurements though. So we are actually more critical of ourselves.}
 % 
-In its current beta version, MADlib has been tuned a fair bit over PostgreSQL and Greenplum, though much remains to be done.  Here we report on some results for a basic scenario that exercises our core functionality, including the C++ abstraction layer, our ability to call out to linear algebra packages, and parallel speedup validation. We defer macro-benchmarking of MADlib's current methods to future work, that will focus on specific algorithm implementations.  
+In its current beta version, MADlib has been tuned a fair bit over PostgreSQL and Greenplum, though much remains to be done.  Here we report on some results for a basic scenario that exercises our core functionality, including the C++ abstraction layer, our ability to call out to linear-algebra packages, and parallel-speedup validation. We defer macro-benchmarking of MADlib's current methods to future work, that will focus on specific algorithm implementations.  
 
-The basic building block of MADlib is a user-defined aggregate, typically one that calls out to a linear algebra library.  In order to evaluate the scalability of this construct, we ran linear regression over Greenplum's parallel DBMS on various data sizes, using a 24-core test cluster we had available, which was outfitted with 144 GB of RAM over 51 TB of raw storage.\footnote{Our cluster is made up of four SuperMicro X8DTT-H server modules, each equipped with one six-core Intel Xeon X5670 processor, clocked at 2.93~GHz. While hyperthreading is enabled, we only run a single Greenplum ``segment'' (query process) per physical core. Each machine has 24~GB of RAM, an LSI MegaRAID~2108 ``Raid On a Chip'' controller with six attached 360~GB solid-state drives, and a Brocade~1020 converged network adapter. The operating system is Red Hat Enterprise Linux Server release 5.5 (Tikanga). On that we are running Greenplum Database 4.2.0, compiled with gcc~4.4.2.  
+The basic building block of MADlib is a user-defined aggregate, typically one that calls out to a linear-algebra library.  In order to evaluate the scalability of this construct, we ran linear regression over Greenplum's parallel DBMS on various data sizes, using a 24-core test cluster we had available, which was outfitted with 144 GB of RAM over 51 TB of raw storage.\footnote{Our cluster is made up of four SuperMicro X8DTT-H server modules, each equipped with one six-core Intel Xeon X5670 processor, clocked at 2.93~GHz. While hyperthreading is enabled, we only run a single Greenplum ``segment'' (query process) per physical core. Each machine has 24~GB of RAM, an LSI MegaRAID~2108 ``Raid On a Chip'' controller with six attached 360~GB solid-state drives, and a Brocade~1020 converged network adapter. The operating system is Red Hat Enterprise Linux Server release 5.5 (Tikanga). On that we are running Greenplum Database 4.2.0, compiled with gcc~4.4.2.  
 %The following gcc options were used to compile the Greenplum database: \texttt{-O3 -funroll-loops -fargument-noalias-global -fno-omit-frame-pointer -finline-limit=1800 -fno-strict-aliasing -fwrapv -g}
 }  This is obviously a relatively modest-sized cluster by today's standards, but it is sufficient to illuminate (a) our efforts at minimizing performance overheads, and (b) our ability to achieve appropriate parallel speedup.  
 %\jmh{Should we add something like this: ``We note that the widely-discussed Mahout library has typically reported performance over much smaller data sets and configurations.  We also note that none of the current libraries for scalable machine learning target multi-rack or multi-datacenter tasks.''} \fs{I we really want, I could redo the test on a larger dataset. But from previous experience, I would strongly assume that run-times go up a lot, the differences between the versions become small, and scalability remains the same. I would probably not say that Mahout tests are usually smaller. That sounds too defensive for me.}
@@ -997,7 +997,7 @@ For running linear regression as outlined in Section~\ref{sec:regression}, we ex
 \begin{math}
 	O(k^3 + (n \cdot k^2)/p)
 \end{math}
-where $k$ is the number of independent variables, $n$ is the number of observations, and $p$ is the number of query processes. The $k^3$ time is needed for the matrix inversion, and the $k^2$ is needed for computing each outer product $\vec x_i \vec x_i^T$ and adding it to the running sum. It turns out that our runtime measurements fit these expectations quite well, and the constant factors are relatively small. See Figure~\ref{fig:regression} and \ref{fig:regression-diagram}. In particular we note:
+where $k$ is the number of independent variables, $n$ is the number of observations, and $p$ is the number of query processes. The $k^3$ time is needed for the matrix inversion, and the $k^2$ is needed for computing each outer product $\vec x_i \vec x_i^T$ and adding it to the running sum. It turns out that our runtime measurements fit these expectations quite well, and the constant factors are relatively small. See Figures~\ref{fig:regression} and \ref{fig:regression-diagram}. In particular we note:
 \begin{itemize}
 	\item The overhead for a single query is very low and only a fraction of a second. This also implies that we lose little in implementating iterative algorithms using driver functions that run multiple SQL queries.
 	\item Given the previous points, the Greenplum database achieves perfect linear speedup in the example shown.
@@ -1008,8 +1008,8 @@ In the example, all data was essentially in the buffer cache, and disk I/O was n
 	\item Version 0.1alpha is an implementation in C that computes the outer-vector products $\vec x_i \vec x_i^T$ as a simple nested loop.
 	\item 
 	% \ksn{I suspect nobody cares about the issues we had with Armadillo in Verion 0.2.1beta... do we really want to devote so much space to that?} \fs{The take-away point was supposed to be: "Do not hide behind the argument disk I/O will overshadow everything." Performance tuning at a fairly low level is still important.}
-		Version 0.2.1beta introduced an implementation in C++ that used the Armadillo \cite{armadillo} linear algebra library as a frontend for LAPACK/BLAS. It turns out that this version was much slower for two reasons: The BLAS library used was the default one shipped with CentOS 5, which is built from the untuned reference BLAS. Profiling and examining the critial code paths revealed that computing $\vec y^T \vec y$ for a row vector $\vec y$ is about three to four times slower than computing $\vec x \vec x^T$ for a column vector $\vec x$ of the same dimension (and the MADlib implementation unfortunately used to do the former). Interestingly, the same holds for Apple's Accelerate framework on Mac~OS~X, which Apple promises to be a tuned library. The second reason for the speed disadvantage is runtime overhead in the first incarnation of the C++ abstraction layer (mostly due to locking and calls into the DBMS backend).
-	\item Version 0.3 has an updated linear-regression implementation that relies on the Eigen C++ linear algebra library and takes advantage of the fact that the matrix $X^T X$ is symmetric positive definite. Runtime overhead has been reduced, but some calls into the database backend still need better caching.
+		Version 0.2.1beta introduced an implementation in C++ that used the Armadillo \cite{armadillo} linear-algebra library as a frontend for LAPACK/BLAS. It turns out that this version was much slower for two reasons: The BLAS library used was the default one shipped with CentOS 5, which is built from the untuned reference BLAS. Profiling and examining the critial code paths revealed that computing $\vec y^T \vec y$ for a row vector $\vec y$ is about three to four times slower than computing $\vec x \vec x^T$ for a column vector $\vec x$ of the same dimension (and the MADlib implementation unfortunately used to do the former). Interestingly, the same holds for Apple's Accelerate framework on Mac~OS~X, which Apple promises to be a tuned library. The second reason for the speed disadvantage is runtime overhead in the first incarnation of the C++ abstraction layer (mostly due to locking and calls into the DBMS backend).
+	\item Version 0.3 has an updated linear-regression implementation that relies on the Eigen C++ linear-algebra library and takes advantage of the fact that the matrix $X^T X$ is symmetric positive definite. Runtime overhead has been reduced, but some calls into the database backend still need better caching.
 \end{itemize}
 %
 Other noteworthy results during our performance studies included that there are no measurable performance differences between PostgreSQL 9.1.1 (both in single and multi-user mode) and GP 4.1 in running the aggregate function on a single core. Moreover, while testing linear/logistic-regression execution times, single-core performance of even laptop CPUs (like the Core i5 540M) did not differ much from today's server CPUs (like the Xeon family). Typically the differences were even less than what the difference in clock speeds might have suggested, perhaps due to compiler and/or architecture issues that we have yet to unpack.
@@ -1625,7 +1625,7 @@ their data-processing substrates offer. For example, MADlib is in in this
 category as it provides a library of functions over an RDBMS. The
 macro- and micro-programming described earlier are examples of design
 templates. The goal of Apache Mahout~\cite{mahout} is to provide an
-open source machine learning library over Apache Hadoop. Currently,
+open-source machine learning library over Apache Hadoop. Currently,
 Mahout provides a library of machine learning algorithms and a
 template to extend this library. At a lower level, the DryadLINQ large
 vector library provides the necessary data types to build analysis
@@ -1703,7 +1703,7 @@ tolerance.
 \section{Conclusion and Discussion}
 Scalable analytics are a clear priority for the research and industrial communities.  MADlib was designed to fill a vacuum for scalable analytics in SQL DBMSs, and connect database research to market needs.
 In our experience, a parallel DBMS provides a very efficient and flexible dataflow substrate for implementing statistical and analytic methods at scale. 
-Standardized support for SQL extensions across DBMSs could be better---robust and portable support for recursion, window aggregates and linear algebra packages would simplify certain tasks.  Since this is unlikely to occur across vendors in the short term, we believe that MADlib can evolve reasonable workarounds at the library and ``design pattern'' level.
+Standardized support for SQL extensions across DBMSs could be better---robust and portable support for recursion, window aggregates and linear-algebra packages would simplify certain tasks.  Since this is unlikely to occur across vendors in the short term, we believe that MADlib can evolve reasonable workarounds at the library and ``design pattern'' level.
 
 The popular alternative to a DBMS infrastructure today is Hadoop MapReduce, which provides much lower-level programming APIs than SQL.
 We have not yet undertaken performance comparisons with Hadoop-based analytics projects like Mahout.  Performance comparisons between MADlib and Mahout today would likely boil down to (a) variations in algorithm implementations, and (b) well-known (and likely temporary) tradeoffs between the current states of DBMSs and Hadoop: C vs. Java, pipelining vs. checkpointing, etc.~\cite{pavlo2009comparison}  None of these variations and tradeoffs seem endemic, and they may well converge over time.  Moreover, from a marketplace perspective, such comparisons are not urgent: many users deploy both platforms and desire analytics libraries for each.  So a reasonable strategy for the community is to foster analytics work in both SQL and Hadoop environments, and explore new architectures (GraphLab, SciDB, ScalOps, etc.) at the same time.  
@@ -1711,7 +1711,7 @@ We have not yet undertaken performance comparisons with Hadoop-based analytics p
 MADlib has room for growth in multiple
 dimensions.  The library infrastructure itself is still in beta, and
 has room to mature. There is room for enhancements in its core
-treatment of mathematical kernels (e.g.\ linear algebra over both
+treatment of mathematical kernels (e.g., linear algebra over both
 sparse and dense matrices) especially in out-of-core settings.  And of
 course there will always be an appetite for additional statistical models and
 algorithmic methods, both textbook techniques and cutting-edge research.  Finally,
