@@ -107,9 +107,9 @@ morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,mor
   %         framesep=2mm}
   % % END Listing environments
 	% BEGIN COMMENTS
-  \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
-  \newcommand{\fs}[1]{{\textcolor{orange}{#1 -- fs}}}
-  \newcommand{\ksn}[1]{{\textcolor{blue}{#1 -- ksn}}}
+  % \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+  % \newcommand{\fs}[1]{{\textcolor{orange}{#1 -- fs}}}
+  % \newcommand{\ksn}[1]{{\textcolor{blue}{#1 -- ksn}}}
   % END COMMENTS
 % END Convenience commands
 
@@ -418,7 +418,8 @@ factors, including the following:
 
 \begin{itemize}
     \item \textbf{The benefits of customization}: Statistical methods are rarely used as turnkey solutions.  As a result, it is common for data scientists to want to modify and adapt canonical models and methods (e.g., regression, classification, clustering) to their own purposes.  This is a very tangible benefit of open-source libraries over traditional closed-source packages. Moreover, in an open-source community there is a process and a set of positive incentives for useful modifications to be shared back to the benefit of the entire community.
-    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community adopt and improve their software.  Open-source efforts can also be synergistic for vendors that sell commercial software, as evidenced by companies like EMC/Greenplum, Oracle, Microsoft and others beginning to provide Apache Hadoop alongside their commercial databases.  Most IT shops today run a mix of open source and proprietary software, and many software vendors are finding it wise to position themselves intelligently in that context.  \fs{Reviewer~2 wanted this section shorter, and the next sentence is, IMHO, indeed an instance where he is right. The sentence raises more questions (why is it an advantage if a Greenplum-sponsored project helps competitors?) than it answers.} Meanwhile, for most database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.  For these vendors, involvement and expertise with an open-source library like MADlib is an opportunity to expand their functionality and service offerings.
+    \item \textbf{Valuable data vs.\ valuable software}:  In many emerging business sectors, the corporate value is captured in the data itself, not in the software used to analyze that data.  Indeed, it is in the interest of these companies to have the open-source community adopt and improve their software.  Open-source efforts can also be synergistic for vendors that sell commercial software, as evidenced by companies like EMC/Greenplum, Oracle, Microsoft and others beginning to provide Apache Hadoop alongside their commercial databases.  Most IT shops today run a mix of open source and proprietary software, and many software vendors are finding it wise to position themselves intelligently in that context.  
+    % \fs{Reviewer~2 wanted this section shorter, and the next sentence is, IMHO, indeed an instance where he is right. The sentence raises more questions (why is it an advantage if a Greenplum-sponsored project helps competitors?) than it answers.} Meanwhile, for most database system vendors, their core competency is not in statistical methods, but rather in the engines that support those methods, and the service industry that evolves around them.  For these vendors, involvement and expertise with an open-source library like MADlib is an opportunity to expand their functionality and service offerings.
     %\fs{As a reader I ask ask myself here: Does Greenplum have competency in statistical methods? If so, why do they want to let competitors benefit from that? The argument would be plausible if MADlib was a joint venture, but leaves open questions as a unilateral move by Greenplum.}
 %MADlib *is* a joint venture, and that's the point -- it's a collaboration between industry and research.  Wouldn't have happened had I not pushed it, and had Greenplum not supported it.
     \item \textbf{Closing the research-to-adoption loop}:  Very few traditional database customers have the capacity to develop significant in-house research into computing or data science. 
