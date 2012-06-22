@@ -1382,18 +1382,14 @@ Labeling (CRF)~\cite{wallach:crf} & $\sum_{k} \left[ \sum_{j} x_j F_j(y_k, z_k) 
 The focus of the MADlib work at Florida and Berkeley has been to integrate statistical text analytics into a DBMS.
 In many domains, structured
 data and unstructured text are both important assets for data
-analysis. The increasing use of text analysis in enterprise
-applications has increased the expectation of customers and the
-opportunities for processing big data. The state-of-the-art text
-analysis tools are based on statistical models and
-algorithms~\cite{JurafskyMartin,feldman2007text}. With the goal to become a framework for
-statistical methods for data analysis at scale, it is important for
-MADlib to include basic statistical methods to implement text analysis
-tasks.
+analysis. For example, electronic medical record systems use transactional databases to store 
+both structured lab results, monitor readings and unstructured physician, operating notes. 
+With our goal to push analysis close to the data, it is important for MADlib to support basic statistical 
+methods for data scientists to implement text analysis tasks.
 
 % different text analysis tasks
 Basic text analysis tasks include part-of-speech (POS) tagging,
-named entity extraction (NER), and entity resolution (ER)~\cite{feldman2007text}.
+named entity extraction (NER), and entity resolution (ER)~\cite{feldman2007text,JurafskyMartin}.
 Different statistical models and algorithms are implemented for each
 of these tasks with different runtime-accuracy tradeoffs. For
 example, an entity resolution task could be to find all mentions in
@@ -1453,9 +1449,8 @@ include: (1) dictionary features: {\it does this token exist in a
   token?} (4) word features: {\it does this the token appear in the
   training data?} and (5) position features: {\it is this token the
   first or last in the token sequence?} The right combination of
-features depends on the application, and so our support for feature
-extraction heavily leverages the micro-programming interface provided
-by MADlib.
+features depends on the application, and so leveraging the micro-programming
+ interface, we implemented a common set of text feature extractors.
 
 \textbf{Approximate String Matching:} A recurring primitive operation
 in text processing applications is the ability to match strings
@@ -1466,9 +1461,9 @@ approximately. The technique we use is based on qgrams~\cite{gravano2001using}.
 We used the trigram module in PostgreSQL to create
 and index 3-grams over text.  Given a string ``Tim Tebow'' we can
 create a 3-gram by using a sliding window of 3 characters over this
-text string. Given two strings we can compare the overlap of two sets
-of corresponding 3-grams and compute a similarity as the approximate
-matching score. This functionality comes packaged with PostgreSQL.
+text string. Using the 3-gram index, we created an approximate matching UDF 
+that takes in a query string and return all documents in the corpus that contain at 
+least one approximate match.
 
 %The similarity between $term_1$ and $term_2$ is computed using the
 %following equation:
@@ -1534,7 +1529,7 @@ The MCMC algorithms involve iterative procedures where the current iteration dep
 
 % main results, lessons, surprises
 \paragraph*{Using the MADlib Framework} 
-Because this work predated the release of MADlib, it diverged from some of the macro-coordination patterns of Section~\ref{sec:macro}, and took advantage of  PostgreSQL features that are less portable.  These details require refactoring to fit into the current MADlib design style, which we are finding manageable.
+Because this work predated the release of MADlib, it diverged from some of the macro-coordination patterns of Section~\ref{sec:macro}, and took advantage of  PostgreSQL features that are less portable.  These details require refactoring to fit into the current MADlib design style, which we are currently working on.
 In addition to the work reported above, there are a host of other features of both PostgreSQL and MADlib
 that are valuable for text analytics.  Extension libraries for PostgreSQL and Greenplum provides text processing features such
 as inverted indexes, trigram indexes for approximate string matching,
