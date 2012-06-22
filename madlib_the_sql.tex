@@ -1383,7 +1383,7 @@ The focus of the MADlib work at Florida and Berkeley has been to integrate stati
 In many domains, structured
 data and unstructured text are both important assets for data
 analysis. For example, electronic medical record systems use transactional databases to store 
-both structured lab results, monitor readings and unstructured physician, operating notes. 
+both structured data such as lab results and monitor readings, and unstructured data such as notes from physicians. 
 With our goal to push analysis close to the data, it is important for MADlib to support basic statistical 
 methods for data scientists to implement text analysis tasks.
 
@@ -1462,7 +1462,7 @@ We used the trigram module in PostgreSQL to create
 and index 3-grams over text.  Given a string ``Tim Tebow'' we can
 create a 3-gram by using a sliding window of 3 characters over this
 text string. Using the 3-gram index, we created an approximate matching UDF 
-that takes in a query string and return all documents in the corpus that contain at 
+that takes in a query string and returns all documents in the corpus that contain at 
 least one approximate match.
 
 %The similarity between $term_1$ and $term_2$ is computed using the
