@@ -138,19 +138,19 @@ morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,mor
 % of EIGHT authors. SIX appear on the 'first-page' (for formatting
 % reasons) and the remaining two appear in the \additionalauthors section.
 
-\author{Joseph M. Hellerstein\\{\small U.C. Berkeley} \and
- Christoper R\'{e}\\{\small U. Wisconsin} \and
- Florian Schoppmann\\{\small Greenplum} \and
- Daisy Zhe Wang\\{\small U. Florida} \and
+\author{Joseph M. Hellerstein\\{\small  hellerstein@berkeley.edu}\\{\small U.C. Berkeley} \and
+ Christoper R\'{e}\\{\small chrisre@cs.wisc.edu}\\{\small U. Wisconsin} \and
+ Florian Schoppmann\\{\small Florian.Schoppmann@emc.com}\\{\small Greenplum} \and
+ Daisy Zhe Wang\\{\small daisyw@cise.ufl.edu}\\{\small U. Florida} \and
  % \and
  % Gavin Sherry\\{\small Greenplum} \and
- Eugene Fratkin\\{\small Greenplum} \and
- Aleksander Gorajek\\{\small Greenplum} \and
- Kee Siong Ng\\{\small Greenplum} \and
- Caleb Welton\\{\small Greenplum} \and
- Xixuan Feng \\ {\small U. Wisconsin} \and
- Kun Li \\{\small U. Florida} \and
- Arun Kumar \\{\small U. Wisconsin} \and
+ Eugene Fratkin\\{\small Eugene.Fratkin@emc.com}\\{\small Greenplum} \and
+ Aleksander Gorajek\\{\small Aleksander.Gorajek@emc.com}\\{\small Greenplum} \and
+ Kee Siong Ng\\{\small KeeSiong.Ng@emc.com}\\{\small Greenplum} \and
+ Caleb Welton\\{\small Caleb.Welton@emc.com}\\{\small Greenplum} \and
+ Xixuan Feng\\{\small xfeng@cs.wisc.edu} \\ {\small U. Wisconsin} \and
+ Kun Li\\{\small kli@cise.ufl.edu} \\{\small U. Florida} \and
+ Arun Kumar\\{\small arun@cs.wisc.edu} \\{\small U. Wisconsin} \and
  % Steven Hillion\\{\small Alpine Data Labs} \and
  % Luke Lonergan\\{\small Greenplum} \and
  % Kee Siong Ng\\{\small Greenplum} \and 
@@ -195,8 +195,8 @@ database workloads.  Accounting, by definition, involves significant
 care and attention to detail. Data Warehousing practices followed suit
 by encouraging careful and comprehensive database design, and by following exacting policies regarding the quality of data loaded into the database.
 
-Attitudes toward large databases have been changing quickly in the
-past decade, as the focus of large database usage has shifted from
+Attitudes toward large databases have changed quickly in the
+past decade, as the focus of usage has shifted from
 accountancy to analytics.  The need for correct accounting and data
 warehousing practice has not gone away, but it is becoming a
 shrinking fraction of the volume---and the value---of large-scale data
@@ -240,7 +240,7 @@ ports is provided in Table~\ref{tab:methods}.  This set of methods and ports is 
 The methods in MADlib are designed both for in- or out-of-core execution, and for the shared-nothing, ``scale-out''
 parallelism offered by modern parallel database engines, ensuring that
 computation is done close to the data.  The core functionality is
-written in declarative SQL statements, which orchestrate data movement to and from disk, and across networked machines.  Single-node inner loops take advantage of SQL
+written in declarative SQL statements, which orchestrate data movement to and from disk, and across networked machines.  Single-node inner loops use SQL
 extensibility to call out to high-performance math libraries in
 user-defined scalar and aggregate functions.  At the highest level,
 tasks that require iteration and/or structure definition are coded in
@@ -258,6 +258,7 @@ contributions from additional parties, including both new methods and
 ports to new platforms.
 
 \begin{table}
+  \begin{center}
   \begin{tabular}{|l|l|}
     \hline
     {\bf Category} & {\bf Method} \\ \hline\hline
@@ -282,6 +283,8 @@ ports to new platforms.
           & Array Operations\\
           & Conjugate Gradient Optimization \\\hline
   \end{tabular}
+  \end{center}
+  \vspace{-1em}
 \caption{Methods provided in MADlib v0.3. This version has been tested on two DBMS platforms: PostgreSQL (single-node open source) and Greenplum Database (massively parallel commercial system, free and fully-functional for research use.)}
 \label{tab:methods}
 \end{table}
@@ -721,7 +724,7 @@ In ordinary-least-squares (OLS) linear regression the goal is to fit a linear fu
 It has been observed before that computing $\widehat{\vec b}$ lends itself well to data-parallel implementations in databases~\cite{ordonez-sigmod2000,ordonez-tkde10} and map-reduce \cite{DBLP:conf/nips/ChuKLYBNO06}.  In extensible-database terms, this task can be done with a simple user-defined aggregate. The principal observation is this: $X^TX = \sum_{i=1}^n \vec x_i \vec x_i^T$ and $X^T \vec y = \sum_{i=1}^n \vec x_i y_i$ are just sums of transformations of each data point.  Summation is associative, so data parallelism virtually comes for free---we can compute the per-process subsums of the previous expressions locally in each process, and then sum up all subsums during a second-phase aggregation. As a final non-parallelized step, we compute the inverse of $X^TX$ and then multiply with $X^T \vec y$. These final operations are comparatively cheap, since the number of independent variables (and thus the dimensions of $X^T X$ and $X^T \vec y$) is typically ``small''.
 
 \subsubsection{MADlib Implementation}
-We assume that data points are stored as \texttt{(x DOUBLE PRECISION[], y DOUBLE PRECISION)} tuples. Linear regression is then implemented as a user-defined aggregate with a transition and final function roughly as in Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final}, respectively. (For compactness, we omitted finiteness checks and several output statistics in the example here.)
+We assume that data points are stored as tuples \texttt{(x DOUBLE PRECISION[], y DOUBLE PRECISION)}. Linear regression is then implemented as a user-defined aggregate with a transition and final function roughly as in Listings~\ref{fn:lin-reg-trans} and \ref{fn:lin-reg-final}, respectively. (For compactness, we omitted finiteness checks and several output statistics in the example here.)
  The merge function, which is not shown, just adds all values in the transition states together.  Running the code produces the following:
 
 \begin{scriptsize}
@@ -779,7 +782,7 @@ linregr_transition::run(AnyType& args) {
 }
   \end{lstlisting}
 %	\end{cppcode}
-	\caption{Linear-regression transition function}
+	\caption{Linear regression transition function}
 	\label{fn:lin-reg-trans}
 % \end{code}
 \end{scriptsize}
@@ -817,7 +820,7 @@ linregr_final::run(AnyType& args) {
 }
 \end{lstlisting}
 %	\end{cppcode}
-	\caption{Linear-regression final function}
+	\caption{Linear regression final function}
 	\label{fn:lin-reg-final}
 	% \end{code}
 	\end{scriptsize}
@@ -862,7 +865,7 @@ We highlight the issue here in part to point out that SQL can be a somewhat ``ov
 \begin{figure}
 	\centering
 	\includegraphics[scale=0.71]{LogisticRegression}
-	\caption{Sequence Diagram for Logistic Regression}
+	\caption{Sequence diagram for logistic regression}
 	\label{fig:log-reg-driver}
 \end{figure}
 
@@ -1111,14 +1114,15 @@ done
          24 &    320       & 10 &  46.18  & 171.7   &  84.59  \\
 \bottomrule
 \end{tabular}
-\caption{Linear-regression execution times}
+\caption{Linear regression execution times}
 \label{fig:regression}
 \end{figure*}
 
 \begin{figure}
 \centering
 \includegraphics{linregr-diagram}
-\caption{Linear-regression execution times using MADlib v0.3 on Greenplum Database 4.2.0, 10 million rows}
+\vspace{-2em}
+\caption{Linear regression execution times using MADlib v0.3 on Greenplum Database 4.2.0, 10 million rows}
 \label{fig:regression-diagram}
 \end{figure}
 
@@ -1182,6 +1186,15 @@ random fields.  Not every data analysis problem is
 convex---notable exceptions include the a priori algorithm and graph mining algorithms---but many are convex. Table~\ref{fig:objs:grads} lists models that we have
 implemented in our abstraction over MADlib, all of which are convex. (Note that the previous built-in MADlib examples of linear and logistic regression fall into this category!)
 % \fs{I would like a comment on the overlap of linear and logistic regression from the previous section.}
+
+
+\begin{figure}[b]
+\centering
+\includegraphics[width=2in]{FIGS/x_square}
+\caption{The archetypical convex function $f(x) = x^2$.}
+\label{fig:xsquare}
+\vspace{-1em}
+\end{figure}
 
 In spite of the expressive power of convex optimization, even simple
 algorithms converge at provable rates to the true solution. For
@@ -1300,13 +1313,6 @@ datasets~\cite{Re:sigmod12}.
 %% implementation in MADlib for runtime until 1\% convergence on a
 %% single-node multicore machine. Similarly, our SVM implementation is up
 %% to $5.8\times$ faster than the original MADlib implementation.
-
-\begin{figure}
-\centering
-\includegraphics[width=2in]{FIGS/x_square}
-\caption{The Archetypical Convex Function $f(x) = x^2$.}
-\label{fig:xsquare}
-\end{figure}
 
 \begin{table}
 \centering
@@ -1429,7 +1435,7 @@ approximate string matching (Table~\ref{tab:uflmethods}).
   \hline
 \end{tabular}
 \end{small}
-\caption{Statistical Text Analysis Methods}
+\caption{Statistical text analysis methods}
 \label{tab:uflmethods}
 \end{table}
 
@@ -1480,9 +1486,9 @@ from the model) and MCMC (when we want the probabilities or confidence
 of an answer as well).
 
 \textbf{Viterbi Inference:} The \textit{Viterbi} dynamic
-programming algorithm~\cite{viterbi} is the popular algorithm to find
+programming algorithm is a popular algorithm to find
 the top-k most likely labelings of a document for (linear chain) CRF
-models. 
+models~\cite{viterbi}. 
 % The following dynamic programming computes the top-1 label
 % sequence. (This can be easily extended to compute the top-k).
 % 
@@ -1529,7 +1535,7 @@ The MCMC algorithms involve iterative procedures where the current iteration dep
 
 % main results, lessons, surprises
 \paragraph*{Using the MADlib Framework} 
-Because this work predated the release of MADlib, it diverged from some of the macro-coordination patterns of Section~\ref{sec:macro}, and took advantage of  PostgreSQL features that are less portable.  These details require refactoring to fit into the current MADlib design style, which we are currently working on.
+Because this work predated the release of MADlib, it diverged from the macro-coordination patterns of Section~\ref{sec:macro}, and took advantage of  PostgreSQL features that are less portable.  These details require refactoring to fit into the current MADlib design style, which we are currently working on.
 In addition to the work reported above, there are a host of other features of both PostgreSQL and MADlib
 that are valuable for text analytics.  Extension libraries for PostgreSQL and Greenplum provides text processing features such
 as inverted indexes, trigram indexes for approximate string matching,
@@ -1612,7 +1618,7 @@ offering~\cite{ORE} in that these approaches attempt to automatically
 parallelize code written in R.
 
 \paragraph*{Framework-based Approaches} 
-In framework-based approaches, the goal is to provide the analyst with
+Framework-based ap\-proach\-es attempt to provide the analyst with
 low-level primitives and coordination primitives built on top of a
 data processing substrate. Typically, framework-based approaches
 offer a template whose goal is to automate the common aspects of
